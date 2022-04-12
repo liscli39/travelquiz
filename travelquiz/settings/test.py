@@ -1,4 +1,4 @@
-from .travelquiz import *
+from .base import *
 
 DEBUG = True
 ENVIRONMENT = 'TEST'
@@ -13,3 +13,5 @@ DATABASES = {
         'NAME': 'db.sqlite3',
     }
 }
+
+ENCRYPTOR_SECRET_KEY='aaaaaaaaaaaaaaaa'

@@ -1,6 +1,7 @@
 version: "3"
 services:
   api:
+    container_name: travelquiz_api
     build:
      context: .
      dockerfile: Dockerfile
@@ -19,6 +20,7 @@ services:
       - "mysql8"
 
   mysql8:
+    container_name: travelquiz_mysql
     image: mysql:8.0
     env_file: 
       - .env
@@ -30,6 +32,7 @@ services:
       - ./db/my.cnf:/etc/mysql/my.cnf
 
   phpmyadmin:
+    container_name: travelquiz_phpmyadmin
     image: phpmyadmin
     env_file: 
       - .env
@@ -40,10 +43,10 @@ services:
     ports:
       - 9080:80
 
-  gitlab-runner:
-    container_name: django_runner
-    image: gitlab/gitlab-runner:latest
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./gitlab-runner/config:/etc/gitlab-runner
-    restart: always
+  # gitlab-runner:
+  #   container_name: django_runner
+  #   image: gitlab/gitlab-runner:latest
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - ./gitlab-runner/config:/etc/gitlab-runner
+  #   restart: always

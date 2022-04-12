@@ -10,7 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
-from pathlib import Path
+from datetime import timedelta
 import environ
 
 # 環境変数読み込み
@@ -140,3 +140,11 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'app.user'
+
+JWT_AUTH = {
+    'JWT_EXPIRATION_DELTA': timedelta(hours=6),
+    'JWT_GET_USER_SECRET_KEY': 'app.utils.jwt_handler.jwt_get_user_secret_key',
+    'JWT_AUTH_HEADER_PREFIX': 'Bearer',
+}

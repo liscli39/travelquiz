@@ -1,4 +1,4 @@
-from .travelquiz import *
+from .base import *
 
 # .envファイルから設定読み込み
 # 開発環境では明示的に指定しない限り.envは読み込まない
@@ -26,3 +26,6 @@ DATABASES['default']['HOST'] = env('MYSQL_HOST')
 DATABASES['default']['NAME'] = env('MYSQL_DATABASE')
 DATABASES['default']['USER'] = env('MYSQL_USER')
 DATABASES['default']['PASSWORD'] = env('MYSQL_PASSWORD')
+
+# encryptor
+ENCRYPTOR_SECRET_KEY = env('ENCRYPTOR_SECRET_KEY')
