@@ -1,0 +1,53 @@
+stages:
+  - test
+  - build
+  - deploy
+
+django-test:
+  image: python:3.9.6-buster
+  stage: test
+  variables:
+    SECRET_KEY: ''
+    DJANGO_SETTINGS_MODULE: 'app.settings.test'
+  script:
+    - pip install -r requirements.txt
+    - python manage.py migrate
+    - python manage.py test
+
+# image-dev:
+#   image: docker:19
+#   stage: build
+#   only: 
+#     - develop
+#   services:
+#     - docker:dind
+#   variables:
+#     DOCKER_TLS_CERTDIR: ""
+#   script:
+#     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$CI_REGISTRY" --password-stdin
+#     - docker build -f Dockerfile -t "$CI_REGISTRY_IMAGE:latest" .
+#     - docker push "$CI_REGISTRY_IMAGE:latest"
+
+ssh-dev:
+  stage: deploy
+  # needs:
+  #   - job: image-dev
+  only:
+    - develop
+  allow_failure: false
+  before_script:
+    - 'which ssh-agent || ( apk update && apk add openssh-client )'
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | ssh-add -
+    - mkdir -p ~/.ssh
+    - ssh-keyscan -H $SSH_SERVER_IP >> ~/.ssh/known_hosts
+    - chmod 600 ~/.ssh/known_hosts
+  script:
+    - >
+      ssh -t -t $SSH_SERVER_USER@$SSH_SERVER_IP
+      "cd ${PATH_TO_PROJECT};
+      git pull "https://$GIT_USER:$GIT_PASSWORD@$CI_SERVER_HOST/$CI_PROJECT_PATH";
+      docker-compose up -d;
+      docker-compose restart api;
+      "
+  # when: manual
