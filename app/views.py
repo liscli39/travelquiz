@@ -78,7 +78,7 @@ class QuestionDetailView(APIView):
         question = Question.objects.filter(question_id=question_id).first()
 
         choice_id = PrimaryKeyEncryptor().decrypt(request.data['choice_id'])
-        
+
         if Answer.objects.filter(choice__question_id=question_id).exists():
             return Response({'error': 'QUESTION_ALREADY_SUBMIT'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -104,22 +104,24 @@ class AnswerView(APIView):
         answers = Answer.objects.filter(user=user)
 
         corrects = Question.objects.filter(question_id__in=answers.filter(choice__is_correct=True)
-            .values_list('choice__question_id', flat=True))
+                                           .values_list('choice__question_id', flat=True))
 
         total = Question.objects.filter(question_id__in=answers.values_list('choice__question_id', flat=True))
 
-        return Response({
+        result = {
             "corrects": corrects.count(),
             "total": total.count(),
-        })
+        }
+
+        return Response({'result': result})
 
 
 class RankView(APIView):
     permission_classes = [IsAuthenticated]
 
-
     def get(self, request):
-        answers = Answer.objects.filter(user_id=OuterRef('user_id'), choice__is_correct=True)
+        answers = Answer.objects.filter(
+            user_id=OuterRef('user_id'), choice__is_correct=True)
 
         corrects = Question.objects.annotate(user_id=OuterRef('user_id'))\
             .filter(question_id__in=answers.values_list('choice__question_id', flat=True)) \
@@ -131,7 +133,7 @@ class RankView(APIView):
             corrects=Subquery(corrects.values_list('question_count')[:1]),
             time=Subquery(time_count.values_list('time_count')[:1]),
         ).order_by('-corrects', 'time')
-        
+
         serializer = RankSerializer(users, many=True)
 
-        return Response({'result': serializer.data })
+        return Response({'result': serializer.data})
