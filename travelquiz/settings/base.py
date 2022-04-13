@@ -148,3 +148,5 @@ JWT_AUTH = {
     'JWT_GET_USER_SECRET_KEY': 'app.utils.jwt_handler.jwt_get_user_secret_key',
     'JWT_AUTH_HEADER_PREFIX': 'Bearer',
 }
+
+CORS_ORIGIN_ALLOW_ALL = True
