@@ -67,3 +67,22 @@ class QuestionDetailSerializer(serializers.ModelSerializer):
             'question_text',
             'choices',
         ]
+
+class AnswerQuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Answer
+        fields = '__all__'
+
+
+class RankSerializer(serializers.ModelSerializer):
+    corrects = serializers.IntegerField()
+    time = serializers.IntegerField()
+
+    class Meta:
+        model = User
+        fields = [
+            'name',
+            'phone',
+            'corrects',
+            'time',
+        ]
