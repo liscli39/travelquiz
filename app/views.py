@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.views import ObtainJSONWebToken
 
-from django.db.models import OuterRef, Subquery, Count, Sum
+from django.db.models import OuterRef, Subquery, Count, Sum, Exists
 
 from app.models import User, Question, Choice, Answer
 from app.serializer import LoginSerializer, RegisterSerializer, QuestionDetailSerializer, QuestionSerializer, \
@@ -49,7 +49,9 @@ class QuestionView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        questions = Question.objects.all()
+        answer = Answer.objects.filter(question_id=OuterRef('question_id'))
+        questions = Question.objects.all().annotate(answered=Exists(answer))
+
         serializer = QuestionSerializer(questions, many=True)
         data = serializer.data
 
@@ -61,7 +63,10 @@ class QuestionDetailView(APIView):
 
     def get(self, request, question_id):
         question_id = PrimaryKeyEncryptor().decrypt(question_id)
-        question = Question.objects.filter(question_id=question_id).first()
+
+        answer = Answer.objects.filter(question_id=OuterRef('question_id'))
+        question = Question.objects.filter(question_id=question_id)\
+            .annotate(answered=Exists(answer)).first()
 
         if question is None:
             return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
@@ -77,16 +82,21 @@ class QuestionDetailView(APIView):
         question_id = PrimaryKeyEncryptor().decrypt(question_id)
         question = Question.objects.filter(question_id=question_id).first()
 
-        choice_id = PrimaryKeyEncryptor().decrypt(request.data['choice_id'])
-
-        if Answer.objects.filter(choice__question_id=question_id).exists():
+        if Answer.objects.filter(user=user, question_id=question_id).exists():
             return Response({'error': 'QUESTION_ALREADY_SUBMIT'}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = AnswerQuestionSerializer(data={
+        data = {
             'user': user.user_id,
-            'choice': choice_id,
-            'time': request.data['time'],
-        })
+            'question': question_id,
+        }
+
+        if 'choice_id' in request.data:
+            data['choice'] = PrimaryKeyEncryptor().decrypt(request.data['choice_id'])
+        
+        if 'time' in request.data:
+            data['time'] = request.data['time']
+
+        serializer = AnswerQuestionSerializer(data=data)
 
         if question is None or not serializer.is_valid():
             return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
@@ -104,9 +114,9 @@ class AnswerView(APIView):
         answers = Answer.objects.filter(user=user)
 
         corrects = Question.objects.filter(question_id__in=answers.filter(choice__is_correct=True)
-                                           .values_list('choice__question_id', flat=True))
+                                           .values_list('question_id', flat=True))
 
-        total = Question.objects.filter(question_id__in=answers.values_list('choice__question_id', flat=True))
+        total = Question.objects.filter(question_id__in=answers.values_list('question_id', flat=True))
 
         result = {
             "corrects": corrects.count(),
@@ -121,10 +131,10 @@ class RankView(APIView):
 
     def get(self, request):
         answers = Answer.objects.filter(
-            user_id=OuterRef('user_id'), choice__is_correct=True)
+            user_id=OuterRef('user_id'), choice__is_correct=True, question__isnull=False)
 
         corrects = Question.objects.annotate(user_id=OuterRef('user_id'))\
-            .filter(question_id__in=answers.values_list('choice__question_id', flat=True)) \
+            .filter(question_id__in=answers.values_list('question_id', flat=True)) \
             .annotate(question_count=Count('question_id'))
 
         time_count = answers.annotate(time_count=Sum('time'))

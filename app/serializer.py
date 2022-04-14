@@ -48,23 +48,27 @@ class ChoiceSerializer(serializers.ModelSerializer):
 
 class QuestionSerializer(serializers.ModelSerializer):
     question_id = PrimaryHashField()
+    answered = serializers.BooleanField()
 
     class Meta:
         model = Question
         fields = [
             'question_id',
+            'answered',
         ]
 
 
 class QuestionDetailSerializer(serializers.ModelSerializer):
     question_id = PrimaryHashField()
     choices = ChoiceSerializer(many=True, source='choice_set')
+    answered = serializers.BooleanField()
 
     class Meta:
         model = Question
         fields = [
             'question_id',
             'question_text',
+            'answered',
             'choices',
         ]
 
@@ -86,3 +90,12 @@ class RankSerializer(serializers.ModelSerializer):
             'corrects',
             'time',
         ]
+
+    def to_representation(self, instance):
+        if instance.corrects is None:
+            instance.corrects = 0
+
+        if instance.time is None:
+            instance.time = 0
+
+        return super().to_representation(instance)
