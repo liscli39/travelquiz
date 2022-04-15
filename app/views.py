@@ -113,7 +113,7 @@ class AnswerView(APIView):
         user = request.user
         answers = Answer.objects.filter(user=user)
 
-        corrects = Question.objects.filter(question_id__in=answers.filter(choice__is_correct=True)
+        corrects = Question.objects.filter(question_id__in=answers.filter(choice__is_correct=True, question__isnull=False)
                                            .values_list('question_id', flat=True))
 
         total = Question.objects.filter(question_id__in=answers.values_list('question_id', flat=True))
@@ -135,13 +135,13 @@ class RankView(APIView):
 
         corrects = Question.objects.annotate(user_id=OuterRef('user_id'))\
             .filter(question_id__in=answers.values_list('question_id', flat=True)) \
-            .annotate(question_count=Count('question_id'))
+            .values('question_id')
 
-        time_count = answers.annotate(time_count=Sum('time'))
+        time_count = answers.values('time')
 
         users = User.objects.filter(is_superuser=False).annotate(
-            corrects=Subquery(corrects.values_list('question_count')[:1]),
-            time=Subquery(time_count.values_list('time_count')[:1]),
+            corrects=Count(corrects),
+            time=Sum(time_count),
         ).order_by('-corrects', 'time')
 
         serializer = RankSerializer(users, many=True)
