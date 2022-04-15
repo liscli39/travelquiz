@@ -114,12 +114,12 @@ class AnswerView(APIView):
         answers = Answer.objects.filter(user=user)
 
         corrects = Question.objects.filter(question_id__in=answers.filter(choice__is_correct=True)
-                                           .values_list('question_id', flat=True))
+                                           .values_list('question_id', flat=True)).values_list('question_id', flat=True)
 
         total = Question.objects.filter(question_id__in=answers.values_list('question_id', flat=True))
 
         result = {
-            "corrects": corrects.count(),
+            "corrects": [PrimaryKeyEncryptor().encrypt(correct) for correct in corrects],
             "total": total.count(),
         }
 
