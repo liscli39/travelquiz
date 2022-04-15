@@ -130,19 +130,6 @@ class RankView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        answers = Answer.objects.filter(
-            user_id=OuterRef('user_id'), choice__is_correct=True, question__isnull=False)
-
-        corrects = Question.objects \
-            .annotate(user_id=OuterRef('user_id'))\
-            .values('user_id') \
-            .annotate(count=Count('user_id'))\
-            .filter(question_id__in=answers.values_list('question_id', flat=True))
-
-        time_count = answers \
-            .values('user_id') \
-            .annotate(sum=Sum('time'))
-            
         users = User.objects.raw('''
             SELECT
                 `app_user`.`user_id`,
@@ -168,7 +155,16 @@ class RankView(APIView):
                     LIMIT 1
                 ) AS `time`
             FROM `app_user`
-            WHERE NOT `app_user`.`is_superuser`
+            WHERE NOT `app_user`.`is_superuser` AND (
+                SELECT COUNT(V0.`question_id`) AS `count`
+                FROM `app_question` V0
+                WHERE V0.`question_id` IN(
+                    SELECT U0.`question_id`
+                    FROM `app_answer` U0
+                    INNER JOIN `app_choice` U1 ON (U0.`choice_id` = U1.`choice_id`)
+                    WHERE  U1.`is_correct` AND U0.`question_id` IS NOT NULL AND U0.`user_id` = `app_user`.`user_id`
+                ) LIMIT 1
+            ) > 0
             ORDER BY `corrects` DESC, `time` ASC;
         ''')
 
