@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.views import ObtainJSONWebToken
 
-from django.db.models import OuterRef, Subquery, Count, Sum, Exists
+from django.db.models import OuterRef, Subquery, Count, Sum, Exists, Value
 
 from app.models import User, Question, Choice, Answer
 from app.serializer import LoginSerializer, RegisterSerializer, QuestionDetailSerializer, QuestionSerializer, \
@@ -133,16 +133,44 @@ class RankView(APIView):
         answers = Answer.objects.filter(
             user_id=OuterRef('user_id'), choice__is_correct=True, question__isnull=False)
 
-        corrects = Question.objects.annotate(user_id=OuterRef('user_id'))\
-            .filter(question_id__in=answers.values_list('question_id', flat=True)) \
-            .values('question_id')
+        corrects = Question.objects \
+            .annotate(user_id=OuterRef('user_id'))\
+            .values('user_id') \
+            .annotate(count=Count('user_id'))\
+            .filter(question_id__in=answers.values_list('question_id', flat=True))
 
-        time_count = answers.values('time')
-
-        users = User.objects.filter(is_superuser=False).annotate(
-            corrects=Count(corrects),
-            time=Sum(time_count),
-        ).order_by('-corrects', 'time')
+        time_count = answers \
+            .values('user_id') \
+            .annotate(sum=Sum('time'))
+            
+        users = User.objects.raw('''
+            SELECT
+                `app_user`.`user_id`,
+                `app_user`.`phone`,
+                `app_user`.`name`,
+                (
+                SELECT COUNT(V0.`question_id`) AS `count`
+                FROM `app_question` V0
+                WHERE V0.`question_id` IN(
+                    SELECT U0.`question_id`
+                    FROM `app_answer` U0
+                    INNER JOIN `app_choice` U1 ON (U0.`choice_id` = U1.`choice_id`)
+                    WHERE  U1.`is_correct` AND U0.`question_id` IS NOT NULL AND U0.`user_id` = `app_user`.`user_id`
+                ) LIMIT 1
+                ) AS `corrects`,
+                (
+                    SELECT SUM(U0.`time`)
+                    FROM `app_answer` U0
+                    INNER JOIN `app_choice` U1 ON (U0.`choice_id` = U1.`choice_id`)
+                    WHERE U1.`is_correct` AND U0.`question_id` IS NOT NULL AND U0.`user_id` = `app_user`.`user_id`
+                    GROUP BY U0.`user_id`
+                    ORDER BY NULL
+                    LIMIT 1
+                ) AS `time`
+            FROM `app_user`
+            WHERE NOT `app_user`.`is_superuser`
+            ORDER BY `corrects` DESC, `time` ASC;
+        ''')
 
         serializer = RankSerializer(users, many=True)
 
