@@ -130,6 +130,9 @@ class RankView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        completed = Answer.objects.values('user_id').annotate(question_count=Count('question_id'))\
+            .filter(question_count=Question.objects.count()).values_list('user_id', flat=True)
+
         users = User.objects.raw('''
             SELECT
                 `app_user`.`user_id`,
@@ -155,7 +158,8 @@ class RankView(APIView):
                     LIMIT 1
                 ) AS `time`
             FROM `app_user`
-            WHERE NOT `app_user`.`is_superuser` AND (
+            WHERE NOT `app_user`.`is_superuser` AND
+                `app_user`.`user_id` IN ({}) AND (
                 SELECT COUNT(V0.`question_id`) AS `count`
                 FROM `app_question` V0
                 WHERE V0.`question_id` IN(
@@ -166,8 +170,8 @@ class RankView(APIView):
                 ) LIMIT 1
             ) > 0
             ORDER BY `corrects` DESC, `time` ASC;
-        ''')
-
+        '''.format(completed.query))
+        
         serializer = RankSerializer(users, many=True)
 
         return Response({'result': serializer.data})
