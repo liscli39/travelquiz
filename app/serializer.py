@@ -1,7 +1,8 @@
 
 from rest_framework import serializers
-from app.models import User, Question, Answer, Choice
+from app.models import User, Question, Answer, Choice, Group, GroupUser, GroupAnswer
 from app.utils.encryptor import PrimaryKeyEncryptor
+from app.utils.enum import Enum
 
 
 class PrimaryHashField(serializers.IntegerField):
@@ -100,3 +101,27 @@ class RankSerializer(serializers.ModelSerializer):
             instance.time = 0
 
         return super().to_representation(instance)
+
+
+class GroupSerializer(serializers.ModelSerializer):
+    group_id = PrimaryHashField(required=False)
+    
+    class Meta:
+        model = Group
+        fields = '__all__'
+
+    def create(self, validated_data):
+        validated_data['status'] = Enum.GROUP_STATUS_WAITING
+        return super().create(validated_data)
+
+
+class GroupUserSerializer(serializers.ModelSerializer):
+     class Meta:
+        model = GroupUser
+        fields = '__all__'
+
+
+class GroupAnswerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GroupAnswer
+        fields = '__all__'
