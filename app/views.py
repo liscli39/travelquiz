@@ -190,19 +190,20 @@ class GroupView(APIView):
     def post(self, request):
         user = request.user
         if Group.objects.filter(created_by=user).exists():
-            return Response({'error': 'USER_ALREADY_GROUP_OWNER'}, status=status.HTTP_400_BAD_REQUEST)
+            # return Response({'error': 'USER_ALREADY_GROUP_OWNER'}, status=status.HTTP_400_BAD_REQUEST)
+            serializer = GroupSerializer(Group.objects.filter(created_by=user).first())
+        else:
+            data = {
+                'group_title': request.data['group_title'],
+                'created_by': user.user_id,
+            }
 
-        data = {
-            'group_title': request.data['group_title'],
-            'created_by': user.user_id,
-        }
+            serializer = GroupSerializer(data=data)
+            if not serializer.is_valid():
+                return Response({'error': 'INVALID_PARAMS'}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = GroupSerializer(data=data)
-        if not serializer.is_valid():
-            print(serializer.errors)
-            return Response({'error': 'INVALID_PARAMS'}, status=status.HTTP_400_BAD_REQUEST)
+            group = serializer.save()
 
-        group = serializer.save()
         data = serializer.data
 
         # Wait for 15 minutes before cancel group
@@ -276,11 +277,10 @@ class GroupJoinView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, group_id):
-        group_id = PrimaryKeyEncryptor().decrypt(group_id)
         user = request.user
 
         serializer = GroupUserSerializer(data={
-            'group': group_id,
+            'group': PrimaryKeyEncryptor().decrypt(group_id),
             'user': user.user_id,
             'status': Enum.USER_GROUP_STATUS_WAITING 
         })
@@ -289,6 +289,7 @@ class GroupJoinView(APIView):
             return Response({'error': 'INVALID_PARAMS'}, status=status.HTTP_400_BAD_REQUEST)
 
         group_user = serializer.save()  
+        send_to_channel_room(group_id, 'join_room', user.user_id)
 
         return Response({"result": "ok"})
 
