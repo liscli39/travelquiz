@@ -1,11 +1,12 @@
 from django.db import models
 from app.utils.enum import Enum
 from app.models.user import User
+from app.utils.encryptor import PrimaryKeyEncryptor
 
 
 class Group(models.Model):
     def __str__(self):
-        return self.group_title
+        return PrimaryKeyEncryptor().encrypt(self.group_id) + ' - ' + self.group_title
 
     group_id = models.BigAutoField(primary_key=True)
     group_title = models.CharField(max_length=255)

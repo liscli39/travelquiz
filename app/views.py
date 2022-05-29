@@ -4,10 +4,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.views import ObtainJSONWebToken
 
-from django.db.models import OuterRef, Subquery, Count, Sum, Exists, Value
+from django.db.models import OuterRef, Count, Exists
 from django.shortcuts import render
 
-from app.models import User, Question, Choice, Answer, Group, GroupUser, GroupAnswer
+from app.models import User, Question, Answer, Group, GroupUser, GroupAnswer
 from app.serializer import LoginSerializer, RegisterSerializer, QuestionDetailSerializer, QuestionSerializer, \
     AnswerQuestionSerializer, RankSerializer, GroupSerializer, GroupUserSerializer, GroupAnswerSerializer
 from app.utils.encryptor import PrimaryKeyEncryptor
@@ -203,15 +203,13 @@ class GroupView(APIView):
                 return Response({'error': 'INVALID_PARAMS'}, status=status.HTTP_400_BAD_REQUEST)
 
             group = serializer.save()
+            # Wait for 15 minutes before cancel group
+            Timer(900, self.timeout_handle, (group.group_id,)).start()
 
         data = serializer.data
-
-        # Wait for 15 minutes before cancel group
-        # Timer(900, self.timeout_handle, (group.group_id))
-
         return Response(data)
 
-    def timeout_handle(group_id):
+    def timeout_handle(self, group_id):
         group = Group.objects.filter(group_id=group_id).first()
         if group is None:
             return
@@ -247,29 +245,40 @@ class GroupDetailView(APIView):
         if group is None:
             return Response({'error': 'GROUP_DOES_NOT_EXIST'}, status=status.HTTP_400_BAD_REQUEST)
 
+        if group.created_by_id != request.user.user_id:
+            return Response({'error': 'NOT_OWNER_GROUP'}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = GroupSerializer(group)
         data = serializer.data
 
-        # send_to_channel_room(data['group_id'], 'cancel_room', 0)
+        send_to_channel_room(data['group_id'], 'cancel_room', 0)
         GroupUser.objects.filter(group=group).delete()
         group.delete()
 
         return Response({"result": "ok"})
 
-
     def put(self, request, group_id):
-        group_id = PrimaryKeyEncryptor().decrypt(group_id)
-
-        group = Group.objects.filter(group_id=group_id).first()
+        group = Group.objects.filter(group_id=PrimaryKeyEncryptor().decrypt(group_id)).first()
         if group is None:
             return Response({'error': 'GROUP_DOES_NOT_EXIST'}, status=status.HTTP_400_BAD_REQUEST)
 
+        if group.created_by_id != request.user.user_id:
+            return Response({'error': 'NOT_OWNER_GROUP'}, status=status.HTTP_400_BAD_REQUEST)
+
         if GroupUser.objects.filter(group=group, status=Enum.USER_GROUP_STATUS_READY).count() < Enum.MIN_JOIN_MEMBER:
-            return Response({'error': 'NOT ENOUGH READY'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'NOT_ENOUGH_READY'}, status=status.HTTP_400_BAD_REQUEST)
+
+        not_ready = GroupUser.objects.filter(group=group).exclude(status=Enum.USER_GROUP_STATUS_READY)
+        not_ready_list = list(not_ready.values_list('user_id', flat=True))
+        not_ready.delete()
 
         group.status = Enum.GROUP_STATUS_PLAYING
         group.save()
 
+        GroupUser.objects.filter(group=group, status=Enum.USER_GROUP_STATUS_READY) \
+            .update(status=Enum.USER_GROUP_STATUS_INGAME)
+
+        send_to_channel_room(group_id, 'game_start', not_ready_list)
         return Response({"result": "ok"})
 
 
@@ -288,7 +297,7 @@ class GroupJoinView(APIView):
         if not serializer.is_valid():
             return Response({'error': 'INVALID_PARAMS'}, status=status.HTTP_400_BAD_REQUEST)
 
-        group_user = serializer.save()  
+        serializer.save()  
         send_to_channel_room(group_id, 'join_room', user.user_id)
 
         return Response({"result": "ok"})
@@ -298,10 +307,9 @@ class GroupReadyView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, group_id):
-        group_id = PrimaryKeyEncryptor().decrypt(group_id)
         user = request.user
 
-        group_user = GroupUser.objects.filter(user=user, group_id=group_id).first()
+        group_user = GroupUser.objects.filter(user=user, group_id=PrimaryKeyEncryptor().decrypt(group_id)).first()
         if group_user is None:
             return Response({'error': 'NOT_JOIN_YET'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -310,6 +318,7 @@ class GroupReadyView(APIView):
 
         group_user.status = Enum.USER_GROUP_STATUS_READY
         group_user.save()
+        send_to_channel_room(group_id, 'ready_play', user.user_id)
 
         return Response({"result": "ok"})
 
@@ -319,8 +328,9 @@ class GroupQuestionView(APIView):
 
     def get(self, request, group_id):
         group_id = PrimaryKeyEncryptor().decrypt(group_id)
+        user = request.user
 
-        answer = GroupAnswer.objects.filter(group_id=group_id, question_id=OuterRef('question_id'))
+        answer = GroupAnswer.objects.filter(group_id=group_id, user=user, question_id=OuterRef('question_id'))
         questions = Question.objects.all().annotate(answered=Exists(answer)).order_by('?')
 
         serializer = QuestionSerializer(questions, many=True)
@@ -335,8 +345,9 @@ class GroupQuestionDetailView(APIView):
     def get(self, request, group_id, question_id):
         group_id = PrimaryKeyEncryptor().decrypt(group_id)
         question_id = PrimaryKeyEncryptor().decrypt(question_id)
+        user = request.user
 
-        answer = GroupAnswer.objects.filter(group_id=group_id, question_id=OuterRef('question_id'))
+        answer = GroupAnswer.objects.filter(group_id=group_id, user=user, question_id=OuterRef('question_id'))
         question = Question.objects.filter(question_id=question_id)\
             .annotate(answered=Exists(answer)).first()
 
@@ -350,33 +361,56 @@ class GroupQuestionDetailView(APIView):
 
     def post(self, request, group_id, question_id):
         user = request.user
-        group_id = PrimaryKeyEncryptor().decrypt(group_id)
         question_id = PrimaryKeyEncryptor().decrypt(question_id)
 
-        question = Question.objects.filter(question_id=question_id).first()
+        group = Group.objects.filter(group_id=PrimaryKeyEncryptor().decrypt(group_id)).first()
+        if group is None:
+            return Response({'error': 'GROUP_NOT_EXIST'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if GroupAnswer.objects.filter(group_id=group_id, user=user, question_id=question_id).exists():
+        group_user = GroupUser.objects.filter(group_id=group.group_id, user_id=user.user_id, 
+                                              status=Enum.USER_GROUP_STATUS_INGAME).first()
+        if group_user is None:
+            return Response({'error': 'USER_NOT_INGAME'}, status=status.HTTP_400_BAD_REQUEST)
+
+        question = Question.objects.filter(question_id=question_id).first()
+        if GroupAnswer.objects.filter(group_id=group.group_id, user_id=user.user_id, question_id=question_id).exists():
             return Response({'error': 'QUESTION_ALREADY_SUBMIT'}, status=status.HTTP_400_BAD_REQUEST)
 
         data = {
+            'group': group.group_id,
             'user': user.user_id,
             'question': question_id,
-            'group': group_id,
         }
 
-        if 'choice_id' in request.data:
-            data['choice'] = PrimaryKeyEncryptor().decrypt(request.data['choice_id'])
+        if 'choice' in request.data:
+            data['choice'] = PrimaryKeyEncryptor().decrypt(request.data['choice'])
         
         if 'time' in request.data:
             data['time'] = request.data['time']
 
-        print(data)
         serializer = GroupAnswerSerializer(data=data)
 
         if question is None or not serializer.is_valid():
             return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer.save()
+        
+        # Check finish
+        all_questions_count = Question.objects.count()
+        user_answer_count = GroupAnswer.objects.filter(group_id=group.group_id, user=user.user_id).count()
+        if user_answer_count >= all_questions_count:
+            group_user.status = Enum.USER_GROUP_STATUS_FINISHED
+            group_user.save()
+
+        # Check all finish
+        group_user_count = GroupUser.objects.filter(group_id=group.group_id).count()
+        completed_count = GroupAnswer.objects.values('user_id').annotate(question_count=Count('question_id'))\
+            .filter(group_id=group.group_id, question_count=all_questions_count).count()
+        
+        if completed_count >= group_user_count:
+            group.status = Enum.GROUP_STATUS_FINISHED
+            group.save()
+            send_to_channel_room(group_id, 'gameover', 0)
 
         return Response({'result': 'ok'},  status=status.HTTP_200_OK)
 
@@ -387,7 +421,7 @@ class GroupAnswerView(APIView):
     def get(self, request, group_id):
         user = request.user
         group_id = PrimaryKeyEncryptor().decrypt(group_id)
-        answers = GroupAnswer.objects.filter(group_id=group_id, user=user)
+        answers = GroupAnswer.objects.filter(group_id=group_id, user_id=user.user_id)
 
         corrects = Question.objects.filter(question_id__in=answers.filter(choice__is_correct=True, question__isnull=False)
                                            .values_list('question_id', flat=True))
@@ -410,7 +444,7 @@ class GroupRankView(APIView):
 
         completed = GroupAnswer.objects.values('user_id').annotate(question_count=Count('question_id'))\
             .filter(group_id=group_id, question_count=Question.objects.count()).values_list('user_id', flat=True)
-        
+
         users = User.objects.raw('''
             SELECT
                 `app_user`.`user_id`,

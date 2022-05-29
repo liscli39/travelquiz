@@ -14,7 +14,6 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mysite.settings")
 
 @database_sync_to_async
 def get_user(token):
-    print('get_userget_userget_user')
     serializer = VerifyJSONWebTokenSerializer(data={"token": token})
     if serializer.is_valid():
         return serializer.object.get('user') or request.user

@@ -43,7 +43,28 @@ class GroupConsumer(WebsocketConsumer):
                 {'error': 'Wrong format or something broken!!'}
             ))
 
+    def game_start(self, event):
+        data = event['data']
+        self.send(text_data=json.dumps({
+            'event': 'game_start',
+            'not_ready': data,
+        }))
+
     def join_room(self, event):
+        data = event['data']
         self.send(text_data=json.dumps({
             'event': 'join_room',
+            'user': data,
+        }))
+
+    def ready_play(self, event):
+        data = event['data']
+        self.send(text_data=json.dumps({
+            'event': 'ready_play',
+            'user': data,
+        }))
+
+    def gameover(self, event):
+        self.send(text_data=json.dumps({
+            'event': 'gameover',
         }))
