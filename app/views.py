@@ -9,7 +9,7 @@ from django.shortcuts import render
 
 from app.models import User, Question, Answer, Group, GroupUser, GroupAnswer
 from app.serializer import LoginSerializer, RegisterSerializer, QuestionDetailSerializer, QuestionSerializer, \
-    AnswerQuestionSerializer, RankSerializer, GroupSerializer, GroupUserSerializer, GroupAnswerSerializer
+    AnswerQuestionSerializer, RankSerializer, GroupSerializer, GroupUserSerializer, GroupAnswerSerializer, UserSerializer
 from app.utils.encryptor import PrimaryKeyEncryptor
 from app.utils.enum import Enum
 from app.utils.common import send_to_channel_room
@@ -50,6 +50,15 @@ class RegisterView(ObtainJSONWebToken):
         )
 
         return super().post(request, *args, **kwargs)
+
+
+class ProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
 
 
 class QuestionView(APIView):
@@ -295,6 +304,7 @@ class GroupJoinView(APIView):
         })
 
         if not serializer.is_valid():
+            print(serializer.errors)
             return Response({'error': 'INVALID_PARAMS'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer.save()  
