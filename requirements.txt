@@ -7,3 +7,5 @@ django-cors-headers==3.7.0
 mysqlclient==2.0.3
 gunicorn==20.1.0
 cryptography==3.4.8
+channels==3.0.4
+channels_redis==3.4.0

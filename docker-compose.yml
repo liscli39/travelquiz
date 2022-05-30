@@ -32,22 +32,9 @@ services:
       - ./db/mysql_data:/var/lib/mysql
       - ./db/my.cnf:/etc/mysql/my.cnf
 
-  phpmyadmin:
-    container_name: travelquiz_phpmyadmin
-    image: phpmyadmin
-    env_file: 
-      - .env
-    environment:
-      - PMA_ARBITRARY=1
-      - PMA_HOST=mysql
-      - PMA_PORT=3306
+  redis:
+    image: "redis:alpine"
+    container_name: travelquiz_redis
+    hostname: travelquiz_redis
     ports:
-      - 9080:80
-
-  # gitlab-runner:
-  #   container_name: django_runner
-  #   image: gitlab/gitlab-runner:latest
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #     - ./gitlab-runner/config:/etc/gitlab-runner
-  #   restart: always
+      - "6379:6379"
