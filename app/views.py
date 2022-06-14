@@ -15,6 +15,7 @@ from app.utils.enum import Enum
 from app.utils.common import send_to_channel_room
 
 from threading import Timer
+from datetime import datetime
 
 
 def index(request):
@@ -89,12 +90,10 @@ class QuestionDetailView(APIView):
         question_id = PrimaryKeyEncryptor().decrypt(question_id)
         question = Question.objects.filter(question_id=question_id).first()
 
-        if Answer.objects.filter(user=user, question_id=question_id).exists():
-            return Response({'error': 'QUESTION_ALREADY_SUBMIT'}, status=status.HTTP_400_BAD_REQUEST)
-
         data = {
             'user': user.user_id,
             'question': question_id,
+            'submits': str(int(current.timestamp()))
         }
 
         if 'choice_id' in request.data:
@@ -103,12 +102,33 @@ class QuestionDetailView(APIView):
         if 'time' in request.data:
             data['time'] = request.data['time']
 
-        serializer = AnswerQuestionSerializer(data=data)
+        answer = Answer.objects.filter(user=user, question_id=question_id).first()
+        current = datetime.now()
 
-        if question is None or not serializer.is_valid():
-            return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
+        if answer:
+            startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
 
-        serializer.save()
+            times = answer.submits.split(';') if answer.submits is not None else []
+            times.append(str(int(current.timestamp())))
+            times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:5]
+
+            answer.submits = ';'.join(times)
+            answer.save()
+
+            if len(times) >= 3:
+                return Response({'error': 'QUESTION_LIMIT_SUBMIT'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            answer.choice_id = data['choice']
+            answer.time = data['time']
+            answer.save()
+
+        else:
+            serializer = AnswerQuestionSerializer(data=data)
+
+            if question is None or not serializer.is_valid():
+                return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
+
+            serializer.save()
 
         return Response({'result': 'ok'},  status=status.HTTP_200_OK)
 
