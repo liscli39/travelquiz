@@ -102,10 +102,29 @@ class RankSerializer(serializers.ModelSerializer):
 
         return super().to_representation(instance)
 
+class GroupUserField(serializers.ModelSerializer):
+    status = serializers.CharField(source='get_status_display')
+    phone = serializers.CharField(source='user.phone')
+    name = serializers.CharField(source='user.name')
+    address = serializers.CharField(source='user.address')
+    office = serializers.CharField(source='user.office')
+
+    class Meta:
+        model = GroupUser
+        fields = [
+            'user_id',
+            'phone',
+            'name',
+            'address',
+            'office',
+            'status',
+        ]
 
 class GroupSerializer(serializers.ModelSerializer):
     group_id = PrimaryHashField(required=False)
-    
+    status = serializers.CharField(source='get_status_display')
+    users = GroupUserField(many=True, source='groupuser_set')
+
     class Meta:
         model = Group
         fields = '__all__'
@@ -116,7 +135,7 @@ class GroupSerializer(serializers.ModelSerializer):
 
 
 class GroupUserSerializer(serializers.ModelSerializer):
-     class Meta:
+    class Meta:
         model = GroupUser
         fields = '__all__'
 
@@ -125,3 +144,15 @@ class GroupAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = GroupAnswer
         fields = '__all__'
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'user_id',
+            'phone',
+            'name',
+            'address',
+            'office',
+        ]
