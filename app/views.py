@@ -99,6 +99,7 @@ class QuestionDetailView(APIView):
         question_id = PrimaryKeyEncryptor().decrypt(question_id)
         question = Question.objects.filter(question_id=question_id).first()
 
+        current = datetime.now()
         data = {
             'user': user.user_id,
             'question': question_id,
@@ -108,26 +109,25 @@ class QuestionDetailView(APIView):
         if 'choice_id' in request.data:
             data['choice'] = PrimaryKeyEncryptor().decrypt(request.data['choice_id'])
         
-        if 'time' in request.data:
-            data['time'] = request.data['time']
+        data['time'] = request.data['time'] if 'time' in request.data else 9999
 
         answer = Answer.objects.filter(user=user, question_id=question_id).first()
-        current = datetime.now()
-
         if answer:
             startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
 
             times = answer.submits.split(';') if answer.submits is not None else []
-            times.append(str(int(current.timestamp())))
-            times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:5]
+            times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
 
+            if len(times) > 2:
+                return Response({'error': 'QUESTION_LIMIT_SUBMIT'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            times.append(str(int(current.timestamp())))
             answer.submits = ';'.join(times)
             answer.save()
 
-            if len(times) >= 3:
-                return Response({'error': 'QUESTION_LIMIT_SUBMIT'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            answer.choice_id = data['choice']
+            if 'choice' in data:
+                answer.choice_id = data['choice']
+
             answer.time = data['time']
             answer.save()
 
