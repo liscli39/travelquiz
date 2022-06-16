@@ -9,4 +9,5 @@ class Answer(models.Model):
     choice = models.ForeignKey(Choice, on_delete=models.CASCADE, null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     time = models.IntegerField(null=True, blank=True)
+    submits = models.CharField(null=True, blank=True, max_length=255)
     question = models.ForeignKey(Question, on_delete=models.CASCADE, null=True, blank=True)
