@@ -1,0 +1,10 @@
+from django.db import models
+
+class Week(models.Model):
+    def __str__(self) -> str:
+        return self.name
+
+    week_id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=255)
+    is_active = models.BooleanField(null=True, blank=True, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)

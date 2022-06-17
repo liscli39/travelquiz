@@ -67,7 +67,7 @@ class QuestionView(APIView):
 
     def get(self, request):
         answer = Answer.objects.filter(question_id=OuterRef('question_id'))
-        questions = Question.objects.all().annotate(answered=Exists(answer))
+        questions = Question.objects.filter(week__is_active=True).annotate(answered=Exists(answer))
 
         serializer = QuestionSerializer(questions, many=True)
         data = serializer.data
@@ -156,10 +156,10 @@ class AnswerView(APIView):
         user = request.user
         answers = Answer.objects.filter(user=user)
 
-        corrects = Question.objects.filter(question_id__in=answers.filter(choice__is_correct=True, question__isnull=False)
+        corrects = Question.objects.filter(week__is_active=True, question_id__in=answers.filter(choice__is_correct=True, question__isnull=False)
                                            .values_list('question_id', flat=True))
 
-        total = Question.objects.filter(question_id__in=answers.values_list('question_id', flat=True))
+        total = Question.objects.filter(week__is_active=True, question_id__in=answers.values_list('question_id', flat=True))
 
         result = {
             "corrects": corrects.count(),
@@ -168,13 +168,18 @@ class AnswerView(APIView):
 
         return Response({'result': result})
 
+    def delete(self, request):
+        user = request.user
+        Answer.objects.filter(user=user).delete()
+
+        return Response({'result': 'ok'})
 
 class RankView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         completed = Answer.objects.values('user_id').annotate(question_count=Count('question_id'))\
-            .filter(question_count=Question.objects.count()).values_list('user_id', flat=True)
+            .filter(question_count=Question.objects.filter(week__is_active=True).count()).values_list('user_id', flat=True)
 
         users = User.objects.raw('''
             SELECT
