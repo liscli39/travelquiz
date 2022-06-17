@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.views import ObtainJSONWebToken
 
-from django.db.models import OuterRef, Count, Exists
+from django.db.models import OuterRef, Count, Exists, Subquery
 from django.shortcuts import render
 
 from app.models import User, Question, Answer, Group, GroupUser, GroupAnswer
@@ -83,13 +83,20 @@ class QuestionDetailView(APIView):
 
         answer = Answer.objects.filter(question_id=OuterRef('question_id'))
         question = Question.objects.filter(question_id=question_id)\
-            .annotate(answered=Exists(answer)).first()
+            .annotate(answered=Exists(answer), submits=Subquery(answer.values('submits')[:1])).first()
 
         if question is None:
             return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = QuestionDetailSerializer(question)
         data = serializer.data
+    
+        current = datetime.now()
+        startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        times = question.submits.split(';') if question.submits is not None else []
+        times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
+        data['answer_count'] = len(times)
 
         return Response(data, status=status.HTTP_200_OK)
 
