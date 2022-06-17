@@ -21,18 +21,14 @@ class QuestionAdmin(admin.ModelAdmin):
     inlines = [ChoiceInline]
 
 class CustomUserAdmin(UserAdmin):
-    def corrects(self, obj):
+    def answers(self, obj):
         answers = Answer.objects.filter(user=obj)
         corrects = Question.objects.filter(week__is_active=True, question_id__in=answers.filter(choice__is_correct=True, question__isnull=False)
                                            .values_list('question_id', flat=True))
-        return corrects.count()
-
-    def total(self, obj):
-        answers = Answer.objects.filter(user=obj)
         total = Question.objects.filter(week__is_active=True, question_id__in=answers.values_list('question_id', flat=True))
-        return total.count()
+        return f'{corrects.count()}/{total.count()}'
 
-    list_display = ('phone', 'name', 'corrects', 'total')
+    list_display = ('phone', 'name', 'answers')
     fieldsets = (
         ('None', {'fields': ('phone', 'password', 'name')}),
     )
