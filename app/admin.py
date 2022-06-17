@@ -61,7 +61,7 @@ class AnswerAdmin(admin.ModelAdmin):
         return obj.choice.is_correct if obj.choice else False
 
     list_display = ('user', 'question', 'choice', 'is_correct' ,'time')
-    list_filter  = ('choice',)
+    list_filter  = ('user',)
 
 admin.site.register(Question, QuestionAdmin)
 admin.site.register(User, CustomUserAdmin)
