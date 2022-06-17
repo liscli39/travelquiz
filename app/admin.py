@@ -10,7 +10,10 @@ class ChoiceInline(admin.TabularInline):
     extra = 0
 
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('question_text', 'week')
+    def answer_count(self, obj):
+        return Answer.objects.filter(question=obj).count()
+
+    list_display = ('question_text', 'answer_count', 'week')
     list_editable = ('week',)
     fieldsets = [
         (None, {'fields': ['question_text', 'week']}),
@@ -18,15 +21,26 @@ class QuestionAdmin(admin.ModelAdmin):
     inlines = [ChoiceInline]
 
 class CustomUserAdmin(UserAdmin):
-    list_display = ('phone', 'is_superuser', 'is_active')
+    def corrects(self, obj):
+        answers = Answer.objects.filter(user=obj)
+        corrects = Question.objects.filter(week__is_active=True, question_id__in=answers.filter(choice__is_correct=True, question__isnull=False)
+                                           .values_list('question_id', flat=True))
+        return corrects.count()
+
+    def total(self, obj):
+        answers = Answer.objects.filter(user=obj)
+        total = Question.objects.filter(week__is_active=True, question_id__in=answers.values_list('question_id', flat=True))
+        return total.count()
+
+    list_display = ('phone', 'name', 'corrects', 'total')
     fieldsets = (
-        ('None', {'fields': ('phone', 'password', 'name', 'is_active')}),
+        ('None', {'fields': ('phone', 'password', 'name')}),
     )
     add_fieldsets = (
         (
             'None', {
                 'classes': ('wide',),
-                'fields': ('phone', 'name', 'password1', 'password2', 'is_active')
+                'fields': ('phone', 'name', 'password1', 'password2')
             }
         ),
     )
@@ -47,6 +61,7 @@ class AnswerAdmin(admin.ModelAdmin):
         return obj.choice.is_correct if obj.choice else False
 
     list_display = ('user', 'question', 'choice', 'is_correct' ,'time')
+    list_filter  = ('choice',)
 
 admin.site.register(Question, QuestionAdmin)
 admin.site.register(User, CustomUserAdmin)
