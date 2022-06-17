@@ -62,6 +62,7 @@ class AnswerAdmin(admin.ModelAdmin):
 
     list_display = ('user', 'question', 'choice', 'is_correct' ,'time')
     list_filter  = ('user',)
+    ordering = ('answer_id',)
 
 admin.site.register(Question, QuestionAdmin)
 admin.site.register(User, CustomUserAdmin)
