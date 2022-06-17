@@ -28,6 +28,7 @@ class CustomUserAdmin(UserAdmin):
         total = Question.objects.filter(week__is_active=True, question_id__in=answers.values_list('question_id', flat=True))
         return f'{corrects.count()}/{total.count()}'
 
+    answers.short_description = 'Corrects/Total'
     list_display = ('phone', 'name', 'answers')
     fieldsets = (
         ('None', {'fields': ('phone', 'password', 'name')}),
