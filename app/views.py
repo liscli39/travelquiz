@@ -170,7 +170,7 @@ class AnswerView(APIView):
 
     def delete(self, request):
         user = request.user
-        Answer.objects.filter(user=user).delete()
+        Answer.objects.filter(user=user, question__week__is_active=True).delete()
 
         return Response({'result': 'ok'})
 
