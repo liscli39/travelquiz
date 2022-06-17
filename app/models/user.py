@@ -39,7 +39,7 @@ class UserManager(BaseUserManager):
 
 class User(AbstractUser):
     def __str__(self):
-        return self.phone
+        return self.name
 
     user_id = models.BigAutoField(primary_key=True)
     phone = models.CharField(_('phone'), max_length=12, unique=True)
