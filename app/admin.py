@@ -44,7 +44,7 @@ class WeekAdmin(admin.ModelAdmin):
 class AnswerAdmin(admin.ModelAdmin):
     @admin.display(boolean=True)
     def is_correct(self, obj):
-        return obj.choice.is_correct
+        return obj.choice.is_correct if obj.choice else False
 
     list_display = ('user', 'question', 'choice', 'is_correct' ,'time')
 
