@@ -1,5 +1,5 @@
 from django.db import models
-
+from app.models.week import Week
 
 class Question(models.Model):
     def __str__(self):
@@ -7,3 +7,4 @@ class Question(models.Model):
 
     question_id = models.BigAutoField(primary_key=True)
     question_text = models.TextField()
+    week = models.ForeignKey(Week, on_delete=models.CASCADE, null=True)
