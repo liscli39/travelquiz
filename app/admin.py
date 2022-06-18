@@ -16,7 +16,7 @@ class QuestionAdmin(admin.ModelAdmin):
     list_display = ('question_text', 'answer_count', 'week')
     list_editable = ('week',)
     fieldsets = [
-        (None, {'fields': ['question_text', 'week']}),
+        (None, {'fields': ['question_text', 'week', 'wiki_url', 'wiki_title']}),
     ]
     inlines = [ChoiceInline]
 
