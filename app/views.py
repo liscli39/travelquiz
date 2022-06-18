@@ -4,10 +4,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.views import ObtainJSONWebToken
 
-from django.db.models import OuterRef, Count, Exists, Subquery
+from django.db.models import OuterRef, Count, Exists
 from django.shortcuts import render
 
-from app.models import User, Question, Answer, Group, GroupUser, GroupAnswer
+from app.models import User, Question, Answer, Group, GroupUser, GroupAnswer, Week
 from app.serializer import LoginSerializer, RegisterSerializer, QuestionDetailSerializer, QuestionSerializer, \
     AnswerQuestionSerializer, RankSerializer, GroupSerializer, GroupUserSerializer, GroupAnswerSerializer, UserSerializer
 from app.utils.encryptor import PrimaryKeyEncryptor
@@ -59,7 +59,12 @@ class ProfileView(APIView):
     def get(self, request):
         user = request.user
         serializer = UserSerializer(user)
-        return Response(serializer.data)
+        data = serializer.data
+
+        week = Week.objects.filter(is_active=True).first()
+        data['week'] = week.name
+
+        return Response(data)
 
 
 class QuestionView(APIView):
@@ -69,7 +74,7 @@ class QuestionView(APIView):
         answer = Answer.objects.filter(question_id=OuterRef('question_id'))
         questions = Question.objects.filter(week__is_active=True).annotate(answered=Exists(answer))
 
-        serializer = QuestionSerializer(questions, many=True)
+        serializer = QuestionDetailSerializer(questions, many=True)
         data = serializer.data
 
         return Response(data, status=status.HTTP_200_OK)

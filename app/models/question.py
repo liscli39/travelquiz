@@ -7,4 +7,6 @@ class Question(models.Model):
 
     question_id = models.BigAutoField(primary_key=True)
     question_text = models.TextField()
+    wiki_url = models.URLField(null=True, blank=True)
+    wiki_title = models.CharField(max_length=255, null=True, blank=True)
     week = models.ForeignKey(Week, on_delete=models.CASCADE, null=True)
