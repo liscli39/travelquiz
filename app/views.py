@@ -62,7 +62,7 @@ class ProfileView(APIView):
         data = serializer.data
 
         week = Week.objects.filter(is_active=True).first()
-        data['week'] = week.name
+        data['week'] = week.name if week else None
 
         return Response(data)
 
