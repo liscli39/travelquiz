@@ -83,7 +83,7 @@ class QuestionDetailView(APIView):
 
         answer = Answer.objects.filter(question_id=OuterRef('question_id'))
         question = Question.objects.filter(question_id=question_id)\
-            .annotate(answered=Exists(answer), submits=Subquery(answer.values('submits')[:1])).first()
+            .annotate(answered=Exists(answer)).first()
 
         if question is None:
             return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
@@ -91,13 +91,6 @@ class QuestionDetailView(APIView):
         serializer = QuestionDetailSerializer(question)
         data = serializer.data
     
-        current = datetime.now()
-        startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
-
-        times = question.submits.split(';') if question.submits is not None else []
-        times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
-        data['answer_count'] = len(times)
-
         return Response(data, status=status.HTTP_200_OK)
 
     def post(self, request, question_id):
@@ -106,11 +99,12 @@ class QuestionDetailView(APIView):
         question_id = PrimaryKeyEncryptor().decrypt(question_id)
         question = Question.objects.filter(question_id=question_id).first()
 
-        current = datetime.now()
+        if Answer.objects.filter(user=user, question_id=question_id).exists():
+            return Response({'error': 'QUESTION_ALREADY_SUBMIT'}, status=status.HTTP_400_BAD_REQUEST)
+
         data = {
             'user': user.user_id,
             'question': question_id,
-            'submits': str(int(current.timestamp()))
         }
 
         if 'choice_id' in request.data:
@@ -118,34 +112,11 @@ class QuestionDetailView(APIView):
         
         data['time'] = request.data['time'] if 'time' in request.data else 9999
 
-        answer = Answer.objects.filter(user=user, question_id=question_id).first()
-        if answer:
-            startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
+        serializer = AnswerQuestionSerializer(data=data)
+        if question is None or not serializer.is_valid():
+            return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
 
-            times = answer.submits.split(';') if answer.submits is not None else []
-            times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
-
-            if len(times) > 2:
-                return Response({'error': 'QUESTION_LIMIT_SUBMIT'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            times.append(str(int(current.timestamp())))
-            answer.submits = ';'.join(times)
-            answer.save()
-
-            if 'choice' in data:
-                answer.choice_id = data['choice']
-
-            answer.time = data['time']
-            answer.save()
-
-        else:
-            serializer = AnswerQuestionSerializer(data=data)
-
-            if question is None or not serializer.is_valid():
-                return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
-
-            serializer.save()
-
+        serializer.save()
         return Response({'result': 'ok'},  status=status.HTTP_200_OK)
 
 
@@ -161,18 +132,40 @@ class AnswerView(APIView):
 
         total = Question.objects.filter(week__is_active=True, question_id__in=answers.values_list('question_id', flat=True))
 
+
+        current = datetime.now()
+        startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        times = user.resets.split(';') if user.resets is not None else []
+        times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
+
         result = {
             "corrects": corrects.count(),
             "total": total.count(),
+            "reset_time": len(times),
         }
 
         return Response({'result': result})
 
     def delete(self, request):
         user = request.user
+        current = datetime.now()
+        startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        times = user.resets.split(';') if user.resets is not None else []
+        times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
+
+        if len(times) > 2:
+            return Response({'error': 'RESET_LIMIT'}, status=status.HTTP_400_BAD_REQUEST)
+
         Answer.objects.filter(user=user, question__week__is_active=True).delete()
 
+        times.append(str(int(current.timestamp())))
+        user.resets = ';'.join(times)
+        user.save()
+
         return Response({'result': 'ok'})
+
 
 class RankView(APIView):
     permission_classes = [IsAuthenticated]

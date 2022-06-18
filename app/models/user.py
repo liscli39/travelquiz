@@ -50,6 +50,7 @@ class User(AbstractUser):
     is_active = models.BooleanField(default=False)
     deleted = models.BooleanField(default=False)
     password_reset = models.BooleanField(default=False)
+    resets = models.CharField(null=True, blank=True, max_length=255)
 
     username = None
     objects = UserManager()
