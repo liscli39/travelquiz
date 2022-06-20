@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth.admin import UserAdmin
 
-from .models import Question, Choice, User, Answer, Group, GroupUser, GroupAnswer, Week
+from .models import Question, Choice, User, Answer, Group, GroupUser, GroupAnswer, Week, Island
 
 
 class ChoiceInline(admin.TabularInline):
@@ -45,12 +45,19 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ('user_id', 'phone', 'name')
     ordering = ('phone',)
 
+
+class IslandInline(admin.TabularInline):
+    model = Island
+    extra = 0
+
 class WeekAdmin(admin.ModelAdmin):
     def question_count(self, obj):
         return obj.question_set.count()
 
     list_display = ('name', 'is_active', 'question_count')
     list_editable = ('is_active',)
+    inlines = [IslandInline]
+
 
 class AnswerAdmin(admin.ModelAdmin):
     @admin.display(boolean=True)

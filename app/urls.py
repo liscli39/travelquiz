@@ -11,6 +11,7 @@ urlpatterns = [
     path('questions/<str:question_id>', views.QuestionDetailView.as_view(), name='question_detail'),
     path('answers', views.AnswerView.as_view(), name='answers'),
     path('ranks', views.RankView.as_view(), name='rank'),
+    path('week', views.WeekView.as_view(), name='week'),
     # Group
     path('groups', views.GroupView.as_view(), name='group'),
     path('groups/<str:group_id>', views.GroupDetailView.as_view(), name='group_detail'),

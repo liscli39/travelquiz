@@ -9,7 +9,8 @@ from django.shortcuts import render
 
 from app.models import User, Question, Answer, Group, GroupUser, GroupAnswer, Week
 from app.serializer import LoginSerializer, RegisterSerializer, QuestionDetailSerializer, QuestionSerializer, \
-    AnswerQuestionSerializer, RankSerializer, GroupSerializer, GroupUserSerializer, GroupAnswerSerializer, UserSerializer
+    AnswerQuestionSerializer, RankSerializer, GroupSerializer, GroupUserSerializer, GroupAnswerSerializer, UserSerializer, \
+    WeekSerializer
 from app.utils.encryptor import PrimaryKeyEncryptor
 from app.utils.enum import Enum
 from app.utils.common import send_to_channel_room
@@ -534,5 +535,15 @@ class GroupRankView(APIView):
         '''.format(query=completed.query, group_id=group_id))
         
         serializer = RankSerializer(users, many=True)
+
+        return Response({'result': serializer.data})
+
+
+class WeekView(APIView):
+    permission_classes = []
+
+    def get(self, request):
+        weeks = Week.objects.all()
+        serializer = WeekSerializer(weeks, many=True)
 
         return Response({'result': serializer.data})

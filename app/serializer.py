@@ -1,6 +1,6 @@
 
 from rest_framework import serializers
-from app.models import User, Question, Answer, Choice, Group, GroupUser, GroupAnswer
+from app.models import User, Question, Answer, Choice, Group, GroupUser, GroupAnswer, Week, Island
 from app.utils.encryptor import PrimaryKeyEncryptor
 from app.utils.enum import Enum
 
@@ -160,3 +160,17 @@ class UserSerializer(serializers.ModelSerializer):
             'address',
             'office',
         ]
+
+
+class IslandSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Island
+        fields = ['title', 'descript']
+
+
+class WeekSerializer(serializers.ModelSerializer):
+    islands = IslandSerializer(many=True, source='island_set')
+
+    class Meta:
+        model = Week
+        fields = ['name', 'is_active', 'islands']
