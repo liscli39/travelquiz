@@ -44,7 +44,7 @@ class ChoiceSerializer(serializers.ModelSerializer):
         fields = [
             'choice_id',
             'choice_text',
-            # 'is_correct',
+            'is_correct',
         ]
 
 
