@@ -543,7 +543,9 @@ class WeekView(APIView):
     permission_classes = []
 
     def get(self, request):
-        weeks = Week.objects.all()
-        serializer = WeekSerializer(weeks, many=True)
+        week = Week.objects.filter(is_active=True).first()
+        if week is None:
+            return Response({'result': None})
 
+        serializer = WeekSerializer(week)
         return Response({'result': serializer.data})
