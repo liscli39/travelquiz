@@ -160,3 +160,13 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+
+LOGGING = {
+    'version': 1,
+    'loggers': {
+        'requests': {
+            'level': 'WARNING',
+        },
+    }
+}
