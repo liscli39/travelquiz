@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth.admin import UserAdmin
 
-from .models import Question, Choice, User, Answer, Group, GroupUser, GroupAnswer, Week, Island
+from .models import Question, Choice, User, Answer, Week, Island
 
 
 class ChoiceInline(admin.TabularInline):
@@ -31,7 +31,7 @@ class CustomUserAdmin(UserAdmin):
     answers.short_description = 'Corrects/Total'
     list_display = ('phone', 'name', 'answers')
     fieldsets = (
-        ('None', {'fields': ('phone', 'password', 'name')}),
+        ('None', {'fields': ('phone', 'password', 'name', 'address', 'office')}),
     )
     add_fieldsets = (
         (
