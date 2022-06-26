@@ -29,7 +29,7 @@ class CustomUserAdmin(UserAdmin):
         return f'{corrects.count()}/{total.count()}'
 
     answers.short_description = 'Corrects/Total'
-    list_display = ('phone', 'name', 'answers')
+    list_display = ('phone', 'name', 'answers', 'date_joined')
     fieldsets = (
         ('None', {'fields': ('phone', 'password', 'name', 'address', 'office')}),
     )
