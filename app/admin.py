@@ -64,7 +64,7 @@ class AnswerAdmin(admin.ModelAdmin):
     def is_correct(self, obj):
         return obj.choice.is_correct if obj.choice else False
 
-    raw_id_fields=['user'],
+    raw_id_fields=['user']
     list_display = ('user', 'question', 'is_correct' ,'time', 'choice')
     ordering = ('-answer_id',)
 
