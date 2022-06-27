@@ -85,8 +85,6 @@ class QuestionDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, question_id):
-        question_id = PrimaryKeyEncryptor().decrypt(question_id)
-
         answer = Answer.objects.filter(question_id=OuterRef('question_id'))
         question = Question.objects.filter(question_id=question_id)\
             .annotate(answered=Exists(answer)).first()
@@ -101,8 +99,6 @@ class QuestionDetailView(APIView):
 
     def post(self, request, question_id):
         user = request.user
-
-        question_id = PrimaryKeyEncryptor().decrypt(question_id)
         question = Question.objects.filter(question_id=question_id).first()
 
         if Answer.objects.filter(user=user, question_id=question_id).exists():
@@ -114,7 +110,7 @@ class QuestionDetailView(APIView):
         }
 
         if 'choice_id' in request.data:
-            data['choice'] = PrimaryKeyEncryptor().decrypt(request.data['choice_id'])
+            data['choice'] = request.data['choice_id']
         
         data['time'] = request.data['time'] if 'time' in request.data else 9999
 
@@ -267,8 +263,6 @@ class GroupDetailView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request, group_id):
-        group_id = PrimaryKeyEncryptor().decrypt(group_id)
-
         group = Group.objects.filter(group_id=group_id).first()
         if group is None:
             return Response({'error': 'GROUP_DOES_NOT_EXIST'}, status=status.HTTP_400_BAD_REQUEST)
@@ -279,8 +273,6 @@ class GroupDetailView(APIView):
         return Response(data)
 
     def delete(self, request, group_id):
-        group_id = PrimaryKeyEncryptor().decrypt(group_id)
-
         group = Group.objects.filter(group_id=group_id).first()
         if group is None:
             return Response({'error': 'GROUP_DOES_NOT_EXIST'}, status=status.HTTP_400_BAD_REQUEST)
@@ -298,7 +290,7 @@ class GroupDetailView(APIView):
         return Response({"result": "ok"})
 
     def put(self, request, group_id):
-        group = Group.objects.filter(group_id=PrimaryKeyEncryptor().decrypt(group_id)).first()
+        group = Group.objects.filter(group_id=group_id).first()
         if group is None:
             return Response({'error': 'GROUP_DOES_NOT_EXIST'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -329,7 +321,7 @@ class GroupJoinView(APIView):
         user = request.user
 
         serializer = GroupUserSerializer(data={
-            'group': PrimaryKeyEncryptor().decrypt(group_id),
+            'group': group_id,
             'user': user.user_id,
             'status': Enum.USER_GROUP_STATUS_WAITING 
         })
@@ -349,8 +341,8 @@ class GroupReadyView(APIView):
 
     def post(self, request, group_id):
         user = request.user
+        group_user = GroupUser.objects.filter(user=user, group_id=group_id).first()
 
-        group_user = GroupUser.objects.filter(user=user, group_id=PrimaryKeyEncryptor().decrypt(group_id)).first()
         if group_user is None:
             return Response({'error': 'NOT_JOIN_YET'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -368,7 +360,6 @@ class GroupQuestionView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, group_id):
-        group_id = PrimaryKeyEncryptor().decrypt(group_id)
         user = request.user
 
         answer = GroupAnswer.objects.filter(group_id=group_id, user=user, question_id=OuterRef('question_id'))
@@ -384,8 +375,6 @@ class GroupQuestionDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, group_id, question_id):
-        group_id = PrimaryKeyEncryptor().decrypt(group_id)
-        question_id = PrimaryKeyEncryptor().decrypt(question_id)
         user = request.user
 
         answer = GroupAnswer.objects.filter(group_id=group_id, user=user, question_id=OuterRef('question_id'))
@@ -402,9 +391,8 @@ class GroupQuestionDetailView(APIView):
 
     def post(self, request, group_id, question_id):
         user = request.user
-        question_id = PrimaryKeyEncryptor().decrypt(question_id)
+        group = Group.objects.filter(group_id=group_id).first()
 
-        group = Group.objects.filter(group_id=PrimaryKeyEncryptor().decrypt(group_id)).first()
         if group is None:
             return Response({'error': 'GROUP_NOT_EXIST'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -424,7 +412,7 @@ class GroupQuestionDetailView(APIView):
         }
 
         if 'choice' in request.data:
-            data['choice'] = PrimaryKeyEncryptor().decrypt(request.data['choice'])
+            data['choice'] = request.data['choice']
         
         if 'time' in request.data:
             data['time'] = request.data['time']
@@ -461,7 +449,6 @@ class GroupAnswerView(APIView):
 
     def get(self, request, group_id):
         user = request.user
-        group_id = PrimaryKeyEncryptor().decrypt(group_id)
         answers = GroupAnswer.objects.filter(group_id=group_id, user_id=user.user_id)
 
         corrects = Question.objects.filter(question_id__in=answers.filter(choice__is_correct=True, question__isnull=False)
@@ -481,8 +468,6 @@ class GroupRankView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, group_id):
-        group_id = PrimaryKeyEncryptor().decrypt(group_id)
-
         completed = GroupAnswer.objects.values('user_id').annotate(question_count=Count('question_id'))\
             .filter(group_id=group_id, question_count=Question.objects.count()).values_list('user_id', flat=True)
 
