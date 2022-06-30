@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.views import ObtainJSONWebToken
 
-from django.db.models import OuterRef, Count, Exists
+from django.db.models import OuterRef, Count, Exists, Sum
 from django.shortcuts import render
 
 from app.models import User, Question, Answer, Group, GroupUser, GroupAnswer, Week
@@ -138,6 +138,7 @@ class AnswerView(APIView):
 
         total = Question.objects.filter(week__is_active=True, question_id__in=answers.values_list('question_id', flat=True))
 
+        total_time = answers.filter(question__week__is_active=True).aggregate(Sum('time'))['time__sum']
 
         current = datetime.now()
         startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -149,6 +150,7 @@ class AnswerView(APIView):
             "corrects": corrects.count(),
             "total": total.count(),
             "reset_time": len(times),
+            "total_time": total_time,
         }
 
         return Response({'result': result})
