@@ -30,7 +30,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'channels'
 ]
 
 MIDDLEWARE = [
@@ -161,3 +160,15 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+
+LOGGING = {
+    'version': 1,
+    'loggers': {
+        'requests': {
+            'level': 'WARNING',
+        },
+    }
+}
+
+TIME_ZONE = 'Asia/Ho_Chi_Minh'

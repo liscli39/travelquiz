@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth.admin import UserAdmin
 
-from .models import Question, Choice, User, Answer, Group, GroupUser, GroupAnswer, Week, Island
+from .models import Question, Choice, User, Answer, Week, Island
 
 
 class ChoiceInline(admin.TabularInline):
@@ -29,9 +29,9 @@ class CustomUserAdmin(UserAdmin):
         return f'{corrects.count()}/{total.count()}'
 
     answers.short_description = 'Corrects/Total'
-    list_display = ('phone', 'name', 'answers')
+    list_display = ('phone', 'name', 'answers', 'date_joined')
     fieldsets = (
-        ('None', {'fields': ('phone', 'password', 'name')}),
+        ('None', {'fields': ('phone', 'password', 'name', 'address', 'office')}),
     )
     add_fieldsets = (
         (
@@ -64,8 +64,8 @@ class AnswerAdmin(admin.ModelAdmin):
     def is_correct(self, obj):
         return obj.choice.is_correct if obj.choice else False
 
+    raw_id_fields=['user']
     list_display = ('user', 'question', 'is_correct' ,'time', 'choice')
-    list_filter  = ('user',)
     ordering = ('-answer_id',)
 
 admin.site.register(Question, QuestionAdmin)

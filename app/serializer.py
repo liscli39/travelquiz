@@ -37,8 +37,6 @@ class RegisterSerializer(serializers.Serializer):
 
 
 class ChoiceSerializer(serializers.ModelSerializer):
-    choice_id = PrimaryHashField()
-
     class Meta:
         model = Choice
         fields = [
@@ -49,7 +47,6 @@ class ChoiceSerializer(serializers.ModelSerializer):
 
 
 class QuestionSerializer(serializers.ModelSerializer):
-    question_id = PrimaryHashField()
     answered = serializers.BooleanField()
 
     class Meta:
@@ -61,7 +58,6 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 
 class QuestionDetailSerializer(serializers.ModelSerializer):
-    question_id = PrimaryHashField()
     choices = ChoiceSerializer(many=True, source='choice_set')
     answered = serializers.BooleanField()
     week_name = serializers.CharField(source='week')
@@ -125,7 +121,6 @@ class GroupUserField(serializers.ModelSerializer):
         ]
 
 class GroupSerializer(serializers.ModelSerializer):
-    group_id = PrimaryHashField(required=False)
     status = serializers.CharField(source='get_status_display')
     users = GroupUserField(many=True, source='groupuser_set')
 
