@@ -80,6 +80,22 @@ class QuestionView(APIView):
 
         return Response(data, status=status.HTTP_200_OK)
 
+    def post(self, request):
+        user = request.user
+        data = [{
+            'user': user.user_id,
+            **choice,
+        } for choice in request.data]
+
+        serializer = AnswerQuestionSerializer(data=data, many=True)
+        if not serializer.is_valid():
+            return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+
+        return Response(data, status=status.HTTP_200_OK)
+
+
 
 class QuestionDetailView(APIView):
     permission_classes = [IsAuthenticated]
