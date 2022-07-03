@@ -59,7 +59,6 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 class QuestionDetailSerializer(serializers.ModelSerializer):
     choices = ChoiceSerializer(many=True, source='choice_set')
-    answered = serializers.BooleanField()
     week_name = serializers.CharField(source='week')
 
     class Meta:
@@ -67,7 +66,6 @@ class QuestionDetailSerializer(serializers.ModelSerializer):
         fields = [
             'question_id',
             'question_text',
-            'answered',
             'choices',
             'wiki_url',
             'wiki_title',

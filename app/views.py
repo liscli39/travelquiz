@@ -72,8 +72,7 @@ class QuestionView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        answer = Answer.objects.filter(question_id=OuterRef('question_id'))
-        questions = Question.objects.filter(week__is_active=True).annotate(answered=Exists(answer))
+        questions = Question.objects.filter(week__is_active=True)
 
         serializer = QuestionDetailSerializer(questions, many=True)
         data = serializer.data
