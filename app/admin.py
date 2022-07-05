@@ -31,7 +31,7 @@ class CustomUserAdmin(UserAdmin):
     answers.short_description = 'Corrects/Total'
     list_display = ('phone', 'name', 'answers', 'date_joined')
     fieldsets = (
-        ('None', {'fields': ('phone', 'password', 'name', 'address', 'office')}),
+        ('None', {'fields': ('phone', 'password', 'name', 'address', 'office', 'resets')}),
     )
     add_fieldsets = (
         (

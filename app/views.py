@@ -4,10 +4,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.views import ObtainJSONWebToken
 
-from django.db.models import OuterRef, Count, Exists, Sum
+from django.db.models import OuterRef, Count, Exists, Sum, Q
 from django.shortcuts import render
 
-from app.models import User, Question, Answer, Group, GroupUser, GroupAnswer, Week
+from app.models import User, Question, Answer, Group, GroupUser, GroupAnswer, Week, answer
 from app.serializer import LoginSerializer, RegisterSerializer, QuestionDetailSerializer, QuestionSerializer, \
     AnswerQuestionSerializer, RankSerializer, GroupSerializer, GroupUserSerializer, GroupAnswerSerializer, UserSerializer, \
     WeekSerializer
@@ -89,6 +89,23 @@ class QuestionView(APIView):
         serializer = AnswerQuestionSerializer(data=data, many=True)
         if not serializer.is_valid():
             return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
+
+        answers = Answer.objects.filter(Q(question__week__is_active=True) | Q(question=None), user=user)
+        if answers.exists():
+            current = datetime.now()
+            startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
+
+            times = user.resets.split(';') if user.resets is not None else []
+            times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
+
+            if len(times) > 2:
+                return Response({'error': 'RESET_LIMIT'}, status=status.HTTP_400_BAD_REQUEST)
+
+            answers.delete()
+
+            times.append(str(int(current.timestamp())))
+            user.resets = ';'.join(times)
+            user.save()
 
         serializer.save()
 
@@ -177,7 +194,7 @@ class AnswerView(APIView):
         if len(times) > 2:
             return Response({'error': 'RESET_LIMIT'}, status=status.HTTP_400_BAD_REQUEST)
 
-        Answer.objects.filter(user=user, question__week__is_active=True).delete()
+        Answer.objects.filter(Q(question__week__is_active=True) | Q(question=None), user=user).delete()
 
         times.append(str(int(current.timestamp())))
         user.resets = ';'.join(times)
@@ -187,11 +204,15 @@ class AnswerView(APIView):
 
 
 class RankView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = []
 
-    def get(self, request):
+    def get(self, request):        
+        count = 30
+        if "count" in request.GET:
+            count = request.GET["count"]
+
         completed = Answer.objects.values('user_id').annotate(question_count=Count('question_id'))\
-            .filter(question_count=Question.objects.filter(week__is_active=True).count()).values_list('user_id', flat=True)
+            .filter(question_count=count).values_list('user_id', flat=True)
 
         users = User.objects.raw('''
             SELECT
