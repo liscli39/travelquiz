@@ -1,4 +1,5 @@
 
+from wsgiref import validate
 from rest_framework import serializers
 from app.models import User, Question, Answer, Choice, Group, GroupUser, GroupAnswer, Week, Island
 from app.utils.encryptor import PrimaryKeyEncryptor
@@ -42,7 +43,6 @@ class ChoiceSerializer(serializers.ModelSerializer):
         fields = [
             'choice_id',
             'choice_text',
-            'is_correct',
         ]
 
 

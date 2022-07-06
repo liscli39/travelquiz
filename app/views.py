@@ -89,6 +89,13 @@ class QuestionView(APIView):
         serializer = AnswerQuestionSerializer(data=data, many=True)
         if not serializer.is_valid():
             return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        time_sum = 0
+        for answer in serializer.data:
+            time_sum += answer['time']
+        
+        if time_sum < 1500:
+            return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
 
         answers = Answer.objects.filter(Q(question__week__is_active=True) | Q(question=None), user=user)
         if answers.exists():
