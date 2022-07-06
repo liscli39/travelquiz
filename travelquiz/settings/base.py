@@ -172,3 +172,5 @@ LOGGING = {
 }
 
 TIME_ZONE = 'Asia/Ho_Chi_Minh'
+
+DATA_UPLOAD_MAX_NUMBER_FIELDS = None
