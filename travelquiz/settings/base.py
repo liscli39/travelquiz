@@ -75,6 +75,7 @@ DATABASES = {
         'PASSWORD': '',
         'HOST': 'mysql8',
         'PORT': '3306',
+        'CONN_MAX_AGE': 0,
         'TEST': {
             'NAME': 'db_test',
         },
