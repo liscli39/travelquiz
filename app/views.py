@@ -6,7 +6,6 @@ from rest_framework_jwt.views import ObtainJSONWebToken
 
 from django.db.models import OuterRef, Count, Exists, Sum, Q
 from django.shortcuts import render
-from django.db import connection
 
 from app.models import User, Question, Answer, Group, GroupUser, GroupAnswer, Week, answer
 from app.serializer import LoginSerializer, RegisterSerializer, QuestionDetailSerializer, QuestionSerializer, \
@@ -65,7 +64,7 @@ class ProfileView(APIView):
 
         week = Week.objects.filter(is_active=True).first()
         data['week'] = week.name if week else None
-        connection.close()
+
 
         return Response(data)
 
@@ -79,7 +78,7 @@ class QuestionView(APIView):
         serializer = QuestionDetailSerializer(questions, many=True)
         data = serializer.data
 
-        connection.close()
+
         return Response(data, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -118,7 +117,7 @@ class QuestionView(APIView):
             user.save()
 
         serializer.save()
-        connection.close()
+
         return Response(data, status=status.HTTP_200_OK)
 
 
@@ -136,7 +135,7 @@ class QuestionDetailView(APIView):
 
         serializer = QuestionDetailSerializer(question)
         data = serializer.data
-        connection.close()
+
         return Response(data, status=status.HTTP_200_OK)
 
     def post(self, request, question_id):
@@ -161,7 +160,7 @@ class QuestionDetailView(APIView):
             return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer.save()
-        connection.close()
+
         return Response({'result': 'ok'},  status=status.HTTP_200_OK)
 
 
@@ -191,7 +190,7 @@ class AnswerView(APIView):
             "reset_time": len(times),
             "total_time": total_time,
         }
-        connection.close()
+
         return Response({'result': result})
 
     def delete(self, request):
@@ -210,7 +209,7 @@ class AnswerView(APIView):
         times.append(str(int(current.timestamp())))
         user.resets = ';'.join(times)
         user.save()
-        connection.close()
+
         return Response({'result': 'ok'})
 
 
