@@ -21,15 +21,15 @@ class QuestionAdmin(admin.ModelAdmin):
     inlines = [ChoiceInline]
 
 class CustomUserAdmin(UserAdmin):
-    def answers(self, obj):
-        answers = Answer.objects.filter(user=obj)
-        corrects = Question.objects.filter(week__is_active=True, question_id__in=answers.filter(choice__is_correct=True, question__isnull=False)
-                                           .values_list('question_id', flat=True))
-        total = Question.objects.filter(week__is_active=True, question_id__in=answers.values_list('question_id', flat=True))
-        return f'{corrects.count()}/{total.count()}'
+    # def answers(self, obj):
+    #     answers = Answer.objects.filter(user=obj)
+    #     corrects = Question.objects.filter(week__is_active=True, question_id__in=answers.filter(choice__is_correct=True, question__isnull=False)
+    #                                        .values_list('question_id', flat=True))
+    #     total = Question.objects.filter(week__is_active=True, question_id__in=answers.values_list('question_id', flat=True))
+    #     return f'{corrects.count()}/{total.count()}'
 
-    answers.short_description = 'Corrects/Total'
-    list_display = ('phone', 'name', 'answers', 'date_joined')
+    # answers.short_description = 'Corrects/Total'
+    list_display = ('phone', 'name', 'date_joined')
     fieldsets = (
         ('None', {'fields': ('phone', 'password', 'name', 'address', 'office', 'resets')}),
     )
