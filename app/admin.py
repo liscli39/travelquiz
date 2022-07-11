@@ -4,8 +4,9 @@ from django.http import HttpResponseRedirect
 from django.contrib import admin, messages
 from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth.admin import UserAdmin
-from django.urls import path
+from django.urls import path, reverse
 from django.db.models import Count
+from django.utils.html import format_html
 
 from .models import Question, Choice, User, Answer, Week, Island, Rank
 
@@ -120,7 +121,7 @@ class RankAdmin(admin.ModelAdmin):
         week_id = week.week_id if week is not None else None
 
         completed = Answer.objects.values('user_id').annotate(question_count=Count('question_id'))\
-            .filter(question_count=30).values_list('user_id', flat=True)
+            .filter(question_count=2).values_list('user_id', flat=True)
 
         corrects = '''
             SELECT COUNT(V0.`question_id`) AS `count`
@@ -190,8 +191,15 @@ class RankAdmin(admin.ModelAdmin):
         extra_context = {'title': title, 'updated_at': updated_at, 'action': action}
         return super(RankAdmin, self).changelist_view(request, extra_context=extra_context)
 
+    def name(self, obj):
+        url = reverse('admin:app_user_change', args=(obj.user_id,))
+        return format_html("<a href='{}'>{}</a>", url, obj.user.name)
+
+    def phone(self, obj):
+        return obj.user.phone
+
     change_list_template = 'rank_changelist.html'
-    list_display = ('selected', 'user', 'corrects', 'time')
+    list_display = ('selected', 'name', 'phone','corrects', 'time')
     list_editable = ('selected',)
     list_display_links = None
     ordering = ('-selected', '-corrects', 'time')
