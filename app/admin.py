@@ -114,13 +114,13 @@ class RankAdmin(admin.ModelAdmin):
             week = Week.objects.filter(is_active=True).first()
         
         if week is None:
-            self.message_user(request, "There is no active week!", level=messages.ERROR)
-            return HttpResponseRedirect("../")
+            self.message_user(request, 'There is no active week!', level=messages.ERROR)
+            return HttpResponseRedirect('../')
 
         week_id = week.week_id if week is not None else None
 
         completed = Answer.objects.values('user_id').annotate(question_count=Count('question_id'))\
-            .filter(question_count=2).values_list('user_id', flat=True)
+            .filter(question_count=30).values_list('user_id', flat=True)
 
         corrects = '''
             SELECT COUNT(V0.`question_id`) AS `count`
@@ -168,8 +168,8 @@ class RankAdmin(admin.ModelAdmin):
         week.rank_updated_at = datetime.now()
         week.save()
 
-        self.message_user(request, "All ranks are now updated")
-        return HttpResponseRedirect("../?week={}".format(week_id))
+        self.message_user(request, 'All ranks are now updated')
+        return HttpResponseRedirect('../?week={}'.format(week_id))
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -184,7 +184,10 @@ class RankAdmin(admin.ModelAdmin):
             week = Week.objects.filter(is_active=True).first()
     
         title = week.name if week is not None else None
-        extra_context = {'title': title, "updated_at": week.rank_updated_at, "week": week_id}
+        updated_at = week.rank_updated_at if week is not None else None
+        action = 'reload/' + ('?week={}'.format(week.week_id) if week is not None else '')
+
+        extra_context = {'title': title, 'updated_at': updated_at, 'action': action}
         return super(RankAdmin, self).changelist_view(request, extra_context=extra_context)
 
     change_list_template = 'rank_changelist.html'
