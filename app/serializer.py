@@ -1,6 +1,6 @@
 
 from rest_framework import serializers
-from app.models import User, Question, Answer, Choice, Group, GroupUser, GroupAnswer, Week, Island
+from app.models import User, Question, Answer, Choice, Group, GroupUser, GroupAnswer, Week, Island, Rank
 from app.utils.encryptor import PrimaryKeyEncryptor
 from app.utils.enum import Enum
 
@@ -79,11 +79,10 @@ class AnswerQuestionSerializer(serializers.ModelSerializer):
 
 
 class RankSerializer(serializers.ModelSerializer):
-    corrects = serializers.IntegerField()
-    time = serializers.IntegerField()
-
+    name = serializers.CharField(source='user.name')
+    phone = serializers.CharField(source='user.phone')
     class Meta:
-        model = User
+        model = Rank
         fields = [
             'name',
             'phone',

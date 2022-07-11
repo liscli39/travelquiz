@@ -7,7 +7,7 @@ from rest_framework_jwt.views import ObtainJSONWebToken
 from django.db.models import OuterRef, Count, Exists, Sum, Q
 from django.shortcuts import render
 
-from app.models import User, Question, Answer, Group, GroupUser, GroupAnswer, Week, answer
+from app.models import User, Question, Answer, Group, GroupUser, GroupAnswer, Week, Rank
 from app.serializer import LoginSerializer, RegisterSerializer, QuestionDetailSerializer, QuestionSerializer, \
     AnswerQuestionSerializer, RankSerializer, GroupSerializer, GroupUserSerializer, GroupAnswerSerializer, UserSerializer, \
     WeekSerializer
@@ -217,54 +217,8 @@ class RankView(APIView):
     permission_classes = []
 
     def get(self, request):      
-        return Response({'result': []})   
-        count = 30
-        if "count" in request.GET:
-            count = request.GET["count"]
-
-        completed = Answer.objects.values('user_id').annotate(question_count=Count('question_id'))\
-            .filter(question_count=count).values_list('user_id', flat=True)
-
-        users = User.objects.raw('''
-            SELECT
-                `app_user`.`user_id`,
-                `app_user`.`phone`,
-                `app_user`.`name`,
-                (
-                SELECT COUNT(V0.`question_id`) AS `count`
-                FROM `app_question` V0
-                WHERE V0.`question_id` IN(
-                    SELECT U0.`question_id`
-                    FROM `app_answer` U0
-                    INNER JOIN `app_choice` U1 ON (U0.`choice_id` = U1.`choice_id`)
-                    WHERE  U1.`is_correct` AND U0.`question_id` IS NOT NULL AND U0.`user_id` = `app_user`.`user_id`
-                ) LIMIT 1
-                ) AS `corrects`,
-                (
-                    SELECT SUM(U0.`time`)
-                    FROM `app_answer` U0
-                    INNER JOIN `app_choice` U1 ON (U0.`choice_id` = U1.`choice_id`)
-                    WHERE U1.`is_correct` AND U0.`question_id` IS NOT NULL AND U0.`user_id` = `app_user`.`user_id`
-                    GROUP BY U0.`user_id`
-                    ORDER BY NULL
-                    LIMIT 1
-                ) AS `time`
-            FROM `app_user`
-            WHERE NOT `app_user`.`is_superuser` AND
-                `app_user`.`user_id` IN ({}) AND (
-                SELECT COUNT(V0.`question_id`) AS `count`
-                FROM `app_question` V0
-                WHERE V0.`question_id` IN(
-                    SELECT U0.`question_id`
-                    FROM `app_answer` U0
-                    INNER JOIN `app_choice` U1 ON (U0.`choice_id` = U1.`choice_id`)
-                    WHERE  U1.`is_correct` AND U0.`question_id` IS NOT NULL AND U0.`user_id` = `app_user`.`user_id`
-                ) LIMIT 1
-            ) > 0
-            ORDER BY `corrects` DESC, `time` ASC;
-        '''.format(completed.query))
-        
-        serializer = RankSerializer(users, many=True)
+        ranks = Rank.objects.filter(week__is_active=True, selected=True)
+        serializer = RankSerializer(ranks, many=True)
 
         return Response({'result': serializer.data})
 

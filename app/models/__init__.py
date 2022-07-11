@@ -7,3 +7,4 @@ from .group_user import GroupUser
 from .group_answer import GroupAnswer
 from .week import Week
 from .island import Island
+from .rank import Rank
