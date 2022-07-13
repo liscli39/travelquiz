@@ -73,11 +73,11 @@ class QuestionView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        questions = Question.objects.filter(week__is_active=True)
+        questions = Question.objects.select_related('week').prefetch_related('choice_set') \
+            .filter(week__is_active=True)
 
         serializer = QuestionDetailSerializer(questions, many=True)
         data = serializer.data
-
 
         return Response(data, status=status.HTTP_200_OK)
 
