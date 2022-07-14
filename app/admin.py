@@ -157,7 +157,7 @@ class RankAdmin(admin.ModelAdmin):
                 AND `app_user`.`user_id` IN ({completed}) 
                 AND ({corrects}) > 0
             ORDER BY `corrects` DESC, `time` ASC
-            LIMIT 100;
+            LIMIT 200;
         '''.format(completed=completed.query, corrects=corrects))
 
         Rank.objects.filter(week_id=week_id).delete()
