@@ -60,8 +60,8 @@ class WeekAdmin(admin.ModelAdmin):
     def question_count(self, obj):
         return obj.question_set.count()
 
-    list_display = ('name', 'is_active', 'question_count')
-    list_editable = ('is_active',)
+    list_display = ('name', 'is_active', 'question_count', 'show_rank')
+    list_editable = ('is_active', 'show_rank')
     inlines = [IslandInline]
 
 

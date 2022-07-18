@@ -9,3 +9,4 @@ class Week(models.Model):
     is_active = models.BooleanField(null=True, blank=True, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     rank_updated_at = models.DateTimeField(null=True)
+    show_rank = models.BooleanField(null=True, blank=True, unique=True)

@@ -217,7 +217,7 @@ class RankView(APIView):
     permission_classes = []
 
     def get(self, request):      
-        ranks = Rank.objects.filter(week__is_active=True, selected=True)
+        ranks = Rank.objects.filter(week__show_rank=True, selected=True)
         serializer = RankSerializer(ranks, many=True)
 
         return Response({'result': serializer.data})
