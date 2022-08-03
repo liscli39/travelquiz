@@ -146,7 +146,12 @@ class RankAdmin(admin.ModelAdmin):
                     SELECT SUM(U0.`time`)
                     FROM `app_answer` U0
                     INNER JOIN `app_choice` U1 ON (U0.`choice_id` = U1.`choice_id`)
-                    WHERE U1.`is_correct` AND U0.`question_id` IS NOT NULL AND U0.`user_id` = `app_user`.`user_id`
+                    INNER JOIN `app_question` U2 ON (U0.`question_id` = U2.`question_id`)
+                    WHERE 
+                        U1.`is_correct` AND 
+                        U2.`week_id` = {week_id} AND
+                        U0.`question_id` IS NOT NULL AND 
+                        U0.`user_id` = `app_user`.`user_id`
                     GROUP BY U0.`user_id`
                     ORDER BY NULL
                     LIMIT 1
@@ -158,7 +163,7 @@ class RankAdmin(admin.ModelAdmin):
                 AND ({corrects}) > 0
             ORDER BY `corrects` DESC, `time` ASC
             LIMIT 500;
-        '''.format(completed=completed.query, corrects=corrects))
+        '''.format(completed=completed.query, corrects=corrects, week_id=week_id))
 
         Rank.objects.filter(week_id=week_id).delete()
         Rank.objects.bulk_create([
