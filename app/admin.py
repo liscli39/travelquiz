@@ -121,7 +121,7 @@ class RankAdmin(admin.ModelAdmin):
         week_id = week.week_id if week is not None else None
 
         completed = Answer.objects.values('user_id').annotate(question_count=Count('question_id'))\
-            .filter(question_count=30).values_list('user_id', flat=True)
+            .filter(question_count=30, question__week_id=week_id).values_list('user_id', flat=True)
 
         corrects = '''
             SELECT COUNT(V0.`question_id`) AS `count`
