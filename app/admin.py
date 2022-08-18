@@ -35,7 +35,15 @@ class CustomUserAdmin(UserAdmin):
     #     return f'{corrects.count()}/{total.count()}'
 
     # answers.short_description = 'Corrects/Total'
-    list_display = ('phone', 'name', 'date_joined')
+    def get_address(self, obj):
+        return (obj.address[:75] + '...') if obj.address and len(obj.address) > 75 else obj.address
+
+    def get_office(self, obj):
+        return (obj.office[:75] + '...') if obj.office and len(obj.office) > 75 else obj.office
+
+    list_display = ('phone', 'name', 'get_address', 'get_office')
+    get_address.short_description = 'address'
+    get_office.short_description = 'office'
     fieldsets = (
         ('None', {'fields': ('phone', 'password', 'name', 'address', 'office', 'resets')}),
     )
@@ -48,7 +56,7 @@ class CustomUserAdmin(UserAdmin):
         ),
     )
     form = UserChangeForm
-    search_fields = ('user_id', 'phone', 'name')
+    search_fields = ('user_id', 'phone', 'name', 'address', 'office')
     ordering = ('phone',)
 
 
