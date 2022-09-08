@@ -51,6 +51,7 @@ class User(AbstractUser):
     deleted = models.BooleanField(default=False)
     password_reset = models.BooleanField(default=False)
     resets = models.CharField(null=True, blank=True, max_length=255)
+    allow_access = models.BooleanField(default=False)
 
     username = None
     objects = UserManager()

@@ -41,7 +41,8 @@ class CustomUserAdmin(UserAdmin):
     def get_office(self, obj):
         return (obj.office[:75] + '...') if obj.office and len(obj.office) > 75 else obj.office
 
-    list_display = ('phone', 'name', 'get_address', 'get_office')
+    list_display = ('phone', 'name', 'allow_access', 'get_address', 'get_office')
+    list_editable = ['allow_access']
     get_address.short_description = 'address'
     get_office.short_description = 'office'
     fieldsets = (

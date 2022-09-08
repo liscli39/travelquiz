@@ -16,7 +16,7 @@ class LoginSerializer(serializers.Serializer):
 
     def validate(self, data):
         user = User.objects.filter(phone=data['phone']).first()
-        if user is None or not user.check_password(data['password']):
+        if user is None or not user.check_password(data['password']) or not user.allow_access:
             raise serializers.ValidationError()
         return data
 
