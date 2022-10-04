@@ -38,6 +38,7 @@ class RegisterView(ObtainJSONWebToken):
     permission_classes = []
 
     def post(self, request, *args, **kwargs):
+        return Response({ "result": "ok" })
         serializer = RegisterSerializer(data=request.data)
         if not serializer.is_valid():
             return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
