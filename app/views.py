@@ -4,12 +4,13 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.views import ObtainJSONWebToken
 
-from django.db.models import OuterRef, Count, Exists, Subquery
+from django.db.models import OuterRef, Count, Exists, Sum, Q
 from django.shortcuts import render
 
-from app.models import User, Question, Answer, Group, GroupUser, GroupAnswer
+from app.models import User, Question, Answer, Group, GroupUser, GroupAnswer, Week, Rank
 from app.serializer import LoginSerializer, RegisterSerializer, QuestionDetailSerializer, QuestionSerializer, \
-    AnswerQuestionSerializer, RankSerializer, GroupSerializer, GroupUserSerializer, GroupAnswerSerializer, UserSerializer
+    AnswerQuestionSerializer, RankSerializer, GroupSerializer, GroupUserSerializer, GroupAnswerSerializer, UserSerializer, \
+    WeekSerializer
 from app.utils.encryptor import PrimaryKeyEncryptor
 from app.utils.enum import Enum
 from app.utils.common import send_to_channel_room
@@ -37,6 +38,7 @@ class RegisterView(ObtainJSONWebToken):
     permission_classes = []
 
     def post(self, request, *args, **kwargs):
+        return Response({ "result": "ok" })
         serializer = RegisterSerializer(data=request.data)
         if not serializer.is_valid():
             return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
@@ -59,92 +61,106 @@ class ProfileView(APIView):
     def get(self, request):
         user = request.user
         serializer = UserSerializer(user)
-        return Response(serializer.data)
+        data = serializer.data
+
+        week = Week.objects.filter(is_active=True).first()
+        data['week'] = week.name if week else None
+
+
+        return Response(data)
 
 
 class QuestionView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        answer = Answer.objects.filter(question_id=OuterRef('question_id'))
-        questions = Question.objects.filter(week__is_active=True).annotate(answered=Exists(answer))
+        questions = Question.objects.select_related('week').prefetch_related('choice_set') \
+            .filter(week__is_active=True)
 
-        serializer = QuestionSerializer(questions, many=True)
+        serializer = QuestionDetailSerializer(questions, many=True)
         data = serializer.data
 
         return Response(data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        user = request.user
+        data = [{
+            'user': user.user_id,
+            **choice,
+        } for choice in request.data]
+
+        serializer = AnswerQuestionSerializer(data=data, many=True)
+        if not serializer.is_valid():
+            return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # time_sum = 0
+        # for answer in serializer.data:
+        #     time_sum += answer['time']
+        
+        # if time_sum < 1500:
+        #     return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
+
+        answers = Answer.objects.filter(Q(question__week__is_active=True) | Q(question=None), user=user)
+        if answers.exists():
+            current = datetime.now()
+            startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
+
+            times = user.resets.split(';') if user.resets is not None else []
+            times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
+
+            if len(times) > 2:
+                return Response({'error': 'RESET_LIMIT'}, status=status.HTTP_400_BAD_REQUEST)
+
+            answers.delete()
+
+            times.append(str(int(current.timestamp())))
+            user.resets = ';'.join(times)
+            user.save()
+
+        serializer.save()
+
+        return Response(data, status=status.HTTP_200_OK)
+
 
 
 class QuestionDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, question_id):
-        question_id = PrimaryKeyEncryptor().decrypt(question_id)
-
         answer = Answer.objects.filter(question_id=OuterRef('question_id'))
         question = Question.objects.filter(question_id=question_id)\
-            .annotate(answered=Exists(answer), submits=Subquery(answer.values('submits')[:1])).first()
+            .annotate(answered=Exists(answer)).first()
 
         if question is None:
             return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = QuestionDetailSerializer(question)
         data = serializer.data
-    
-        current = datetime.now()
-        startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
-
-        times = question.submits.split(';') if question.submits is not None else []
-        times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
-        data['answer_count'] = len(times)
 
         return Response(data, status=status.HTTP_200_OK)
 
     def post(self, request, question_id):
         user = request.user
-
-        question_id = PrimaryKeyEncryptor().decrypt(question_id)
         question = Question.objects.filter(question_id=question_id).first()
 
-        current = datetime.now()
+        if Answer.objects.filter(user=user, question_id=question_id).exists():
+            return Response({'error': 'QUESTION_ALREADY_SUBMIT'}, status=status.HTTP_400_BAD_REQUEST)
+
         data = {
             'user': user.user_id,
             'question': question_id,
-            'submits': str(int(current.timestamp()))
         }
 
         if 'choice_id' in request.data:
-            data['choice'] = PrimaryKeyEncryptor().decrypt(request.data['choice_id'])
+            data['choice'] = request.data['choice_id']
         
         data['time'] = request.data['time'] if 'time' in request.data else 9999
 
-        answer = Answer.objects.filter(user=user, question_id=question_id).first()
-        if answer:
-            startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
+        serializer = AnswerQuestionSerializer(data=data)
+        if question is None or not serializer.is_valid():
+            return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
 
-            times = answer.submits.split(';') if answer.submits is not None else []
-            times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
-
-            if len(times) > 2:
-                return Response({'error': 'QUESTION_LIMIT_SUBMIT'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            times.append(str(int(current.timestamp())))
-            answer.submits = ';'.join(times)
-            answer.save()
-
-            if 'choice' in data:
-                answer.choice_id = data['choice']
-
-            answer.time = data['time']
-            answer.save()
-
-        else:
-            serializer = AnswerQuestionSerializer(data=data)
-
-            if question is None or not serializer.is_valid():
-                return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
-
-            serializer.save()
+        serializer.save()
 
         return Response({'result': 'ok'},  status=status.HTTP_200_OK)
 
@@ -161,66 +177,49 @@ class AnswerView(APIView):
 
         total = Question.objects.filter(week__is_active=True, question_id__in=answers.values_list('question_id', flat=True))
 
+        total_time = answers.filter(question__week__is_active=True).aggregate(Sum('time'))['time__sum']
+
+        current = datetime.now()
+        startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        times = user.resets.split(';') if user.resets is not None else []
+        times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
+
         result = {
             "corrects": corrects.count(),
             "total": total.count(),
+            "reset_time": len(times),
+            "total_time": total_time,
         }
 
         return Response({'result': result})
 
     def delete(self, request):
         user = request.user
-        Answer.objects.filter(user=user, question__week__is_active=True).delete()
+        current = datetime.now()
+        startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        times = user.resets.split(';') if user.resets is not None else []
+        times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
+
+        if len(times) > 2:
+            return Response({'error': 'RESET_LIMIT'}, status=status.HTTP_400_BAD_REQUEST)
+
+        Answer.objects.filter(Q(question__week__is_active=True) | Q(question=None), user=user).delete()
+
+        times.append(str(int(current.timestamp())))
+        user.resets = ';'.join(times)
+        user.save()
 
         return Response({'result': 'ok'})
 
+
 class RankView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = []
 
-    def get(self, request):
-        completed = Answer.objects.values('user_id').annotate(question_count=Count('question_id'))\
-            .filter(question_count=Question.objects.filter(week__is_active=True).count()).values_list('user_id', flat=True)
-
-        users = User.objects.raw('''
-            SELECT
-                `app_user`.`user_id`,
-                `app_user`.`phone`,
-                `app_user`.`name`,
-                (
-                SELECT COUNT(V0.`question_id`) AS `count`
-                FROM `app_question` V0
-                WHERE V0.`question_id` IN(
-                    SELECT U0.`question_id`
-                    FROM `app_answer` U0
-                    INNER JOIN `app_choice` U1 ON (U0.`choice_id` = U1.`choice_id`)
-                    WHERE  U1.`is_correct` AND U0.`question_id` IS NOT NULL AND U0.`user_id` = `app_user`.`user_id`
-                ) LIMIT 1
-                ) AS `corrects`,
-                (
-                    SELECT SUM(U0.`time`)
-                    FROM `app_answer` U0
-                    INNER JOIN `app_choice` U1 ON (U0.`choice_id` = U1.`choice_id`)
-                    WHERE U1.`is_correct` AND U0.`question_id` IS NOT NULL AND U0.`user_id` = `app_user`.`user_id`
-                    GROUP BY U0.`user_id`
-                    ORDER BY NULL
-                    LIMIT 1
-                ) AS `time`
-            FROM `app_user`
-            WHERE NOT `app_user`.`is_superuser` AND
-                `app_user`.`user_id` IN ({}) AND (
-                SELECT COUNT(V0.`question_id`) AS `count`
-                FROM `app_question` V0
-                WHERE V0.`question_id` IN(
-                    SELECT U0.`question_id`
-                    FROM `app_answer` U0
-                    INNER JOIN `app_choice` U1 ON (U0.`choice_id` = U1.`choice_id`)
-                    WHERE  U1.`is_correct` AND U0.`question_id` IS NOT NULL AND U0.`user_id` = `app_user`.`user_id`
-                ) LIMIT 1
-            ) > 0
-            ORDER BY `corrects` DESC, `time` ASC;
-        '''.format(completed.query))
-        
-        serializer = RankSerializer(users, many=True)
+    def get(self, request):      
+        ranks = Rank.objects.filter(week__show_rank=True, selected=True)
+        serializer = RankSerializer(ranks, many=True)
 
         return Response({'result': serializer.data})
 
@@ -268,8 +267,6 @@ class GroupDetailView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request, group_id):
-        group_id = PrimaryKeyEncryptor().decrypt(group_id)
-
         group = Group.objects.filter(group_id=group_id).first()
         if group is None:
             return Response({'error': 'GROUP_DOES_NOT_EXIST'}, status=status.HTTP_400_BAD_REQUEST)
@@ -280,8 +277,6 @@ class GroupDetailView(APIView):
         return Response(data)
 
     def delete(self, request, group_id):
-        group_id = PrimaryKeyEncryptor().decrypt(group_id)
-
         group = Group.objects.filter(group_id=group_id).first()
         if group is None:
             return Response({'error': 'GROUP_DOES_NOT_EXIST'}, status=status.HTTP_400_BAD_REQUEST)
@@ -299,7 +294,7 @@ class GroupDetailView(APIView):
         return Response({"result": "ok"})
 
     def put(self, request, group_id):
-        group = Group.objects.filter(group_id=PrimaryKeyEncryptor().decrypt(group_id)).first()
+        group = Group.objects.filter(group_id=group_id).first()
         if group is None:
             return Response({'error': 'GROUP_DOES_NOT_EXIST'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -330,7 +325,7 @@ class GroupJoinView(APIView):
         user = request.user
 
         serializer = GroupUserSerializer(data={
-            'group': PrimaryKeyEncryptor().decrypt(group_id),
+            'group': group_id,
             'user': user.user_id,
             'status': Enum.USER_GROUP_STATUS_WAITING 
         })
@@ -350,8 +345,8 @@ class GroupReadyView(APIView):
 
     def post(self, request, group_id):
         user = request.user
+        group_user = GroupUser.objects.filter(user=user, group_id=group_id).first()
 
-        group_user = GroupUser.objects.filter(user=user, group_id=PrimaryKeyEncryptor().decrypt(group_id)).first()
         if group_user is None:
             return Response({'error': 'NOT_JOIN_YET'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -369,7 +364,6 @@ class GroupQuestionView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, group_id):
-        group_id = PrimaryKeyEncryptor().decrypt(group_id)
         user = request.user
 
         answer = GroupAnswer.objects.filter(group_id=group_id, user=user, question_id=OuterRef('question_id'))
@@ -385,8 +379,6 @@ class GroupQuestionDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, group_id, question_id):
-        group_id = PrimaryKeyEncryptor().decrypt(group_id)
-        question_id = PrimaryKeyEncryptor().decrypt(question_id)
         user = request.user
 
         answer = GroupAnswer.objects.filter(group_id=group_id, user=user, question_id=OuterRef('question_id'))
@@ -403,9 +395,8 @@ class GroupQuestionDetailView(APIView):
 
     def post(self, request, group_id, question_id):
         user = request.user
-        question_id = PrimaryKeyEncryptor().decrypt(question_id)
+        group = Group.objects.filter(group_id=group_id).first()
 
-        group = Group.objects.filter(group_id=PrimaryKeyEncryptor().decrypt(group_id)).first()
         if group is None:
             return Response({'error': 'GROUP_NOT_EXIST'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -425,7 +416,7 @@ class GroupQuestionDetailView(APIView):
         }
 
         if 'choice' in request.data:
-            data['choice'] = PrimaryKeyEncryptor().decrypt(request.data['choice'])
+            data['choice'] = request.data['choice']
         
         if 'time' in request.data:
             data['time'] = request.data['time']
@@ -462,7 +453,6 @@ class GroupAnswerView(APIView):
 
     def get(self, request, group_id):
         user = request.user
-        group_id = PrimaryKeyEncryptor().decrypt(group_id)
         answers = GroupAnswer.objects.filter(group_id=group_id, user_id=user.user_id)
 
         corrects = Question.objects.filter(question_id__in=answers.filter(choice__is_correct=True, question__isnull=False)
@@ -482,8 +472,6 @@ class GroupRankView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, group_id):
-        group_id = PrimaryKeyEncryptor().decrypt(group_id)
-
         completed = GroupAnswer.objects.values('user_id').annotate(question_count=Count('question_id'))\
             .filter(group_id=group_id, question_count=Question.objects.count()).values_list('user_id', flat=True)
 
@@ -537,4 +525,16 @@ class GroupRankView(APIView):
         
         serializer = RankSerializer(users, many=True)
 
+        return Response({'result': serializer.data})
+
+
+class WeekView(APIView):
+    permission_classes = []
+
+    def get(self, request):
+        week = Week.objects.filter(is_active=True).first()
+        if week is None:
+            return Response({'result': None})
+
+        serializer = WeekSerializer(week)
         return Response({'result': serializer.data})

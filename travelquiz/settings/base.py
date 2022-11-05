@@ -30,7 +30,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'channels'
 ]
 
 MIDDLEWARE = [
@@ -76,6 +75,7 @@ DATABASES = {
         'PASSWORD': '',
         'HOST': 'mysql8',
         'PORT': '3306',
+        'CONN_MAX_AGE': 0,
         'TEST': {
             'NAME': 'db_test',
         },
@@ -161,3 +161,17 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+
+LOGGING = {
+    'version': 1,
+    'loggers': {
+        'requests': {
+            'level': 'WARNING',
+        },
+    }
+}
+
+TIME_ZONE = 'Asia/Ho_Chi_Minh'
+
+DATA_UPLOAD_MAX_NUMBER_FIELDS = None

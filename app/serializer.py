@@ -1,6 +1,6 @@
 
 from rest_framework import serializers
-from app.models import User, Question, Answer, Choice, Group, GroupUser, GroupAnswer
+from app.models import User, Question, Answer, Choice, Group, GroupUser, GroupAnswer, Week, Island, Rank
 from app.utils.encryptor import PrimaryKeyEncryptor
 from app.utils.enum import Enum
 
@@ -16,7 +16,7 @@ class LoginSerializer(serializers.Serializer):
 
     def validate(self, data):
         user = User.objects.filter(phone=data['phone']).first()
-        if user is None or not user.check_password(data['password']):
+        if user is None or not user.check_password(data['password']) or not user.allow_access:
             raise serializers.ValidationError()
         return data
 
@@ -37,8 +37,6 @@ class RegisterSerializer(serializers.Serializer):
 
 
 class ChoiceSerializer(serializers.ModelSerializer):
-    choice_id = PrimaryHashField()
-
     class Meta:
         model = Choice
         fields = [
@@ -49,7 +47,6 @@ class ChoiceSerializer(serializers.ModelSerializer):
 
 
 class QuestionSerializer(serializers.ModelSerializer):
-    question_id = PrimaryHashField()
     answered = serializers.BooleanField()
 
     class Meta:
@@ -61,17 +58,18 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 
 class QuestionDetailSerializer(serializers.ModelSerializer):
-    question_id = PrimaryHashField()
     choices = ChoiceSerializer(many=True, source='choice_set')
-    answered = serializers.BooleanField()
+    week_name = serializers.CharField(source='week')
 
     class Meta:
         model = Question
         fields = [
             'question_id',
             'question_text',
-            'answered',
             'choices',
+            'wiki_url',
+            'wiki_title',
+            'week_name',
         ]
 
 class AnswerQuestionSerializer(serializers.ModelSerializer):
@@ -81,11 +79,10 @@ class AnswerQuestionSerializer(serializers.ModelSerializer):
 
 
 class RankSerializer(serializers.ModelSerializer):
-    corrects = serializers.IntegerField()
-    time = serializers.IntegerField()
-
+    name = serializers.CharField(source='user.name')
+    phone = serializers.CharField(source='user.phone')
     class Meta:
-        model = User
+        model = Rank
         fields = [
             'name',
             'phone',
@@ -121,7 +118,6 @@ class GroupUserField(serializers.ModelSerializer):
         ]
 
 class GroupSerializer(serializers.ModelSerializer):
-    group_id = PrimaryHashField(required=False)
     status = serializers.CharField(source='get_status_display')
     users = GroupUserField(many=True, source='groupuser_set')
 
@@ -156,3 +152,17 @@ class UserSerializer(serializers.ModelSerializer):
             'address',
             'office',
         ]
+
+
+class IslandSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Island
+        fields = ['title', 'descript']
+
+
+class WeekSerializer(serializers.ModelSerializer):
+    islands = IslandSerializer(many=True, source='island_set')
+
+    class Meta:
+        model = Week
+        fields = ['name', 'is_active', 'islands']

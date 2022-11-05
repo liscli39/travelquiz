@@ -1,0 +1,17 @@
+{% extends "admin/change_list.html" %}
+{% load i18n static admin_list %}
+
+{% block object-tools %}
+  <div>
+    <form action="{{ action }}" method="POST" style="display: flex;">
+      {% csrf_token %}
+      <input type="submit" name="_save" class="default" style="float: initial;" value="Update ranks">
+      <span style="align-self: flex-end; padding-left: 8px; padding-bottom: 2px; font-size: 12px">
+        Last updated at: <span style="color: var(--link-selected-fg); font-weight: bold;">
+          {{ updated_at|date:'d/m/Y h:i a' }}
+        </span>
+      </span>
+    </form>
+  </div>
+  <br />
+{% endblock %}

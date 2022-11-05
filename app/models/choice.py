@@ -4,7 +4,7 @@ from app.models.question import Question
 
 class Choice(models.Model):
     def __str__(self):
-        return str(self.choice_text)
+        return (self.choice_text[:60] + '..') if len(self.choice_text) > 60 else self.choice_text
 
     choice_id = models.BigAutoField(primary_key=True)
     choice_text = models.TextField()
