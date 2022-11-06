@@ -32,9 +32,9 @@ services:
       - ./db/mysql_data:/var/lib/mysql
       - ./db/my.cnf:/etc/mysql/my.cnf
 
-  # redis:
-  #   image: "redis:alpine"
-  #   container_name: travelquiz_redis
-  #   hostname: travelquiz_redis
-  #   ports:
-  #     - "6379:6379"
+  redis:
+    image: "redis:alpine"
+    container_name: travelquiz_redis
+    hostname: travelquiz_redis
+    ports:
+      - "6379:6379"

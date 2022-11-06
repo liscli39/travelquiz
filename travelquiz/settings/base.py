@@ -21,6 +21,8 @@ BASE_DIR = environ.Path(__file__) - 3
 
 # Application definition
 INSTALLED_APPS = [
+    'channels',
+    'final',
     'app',
     'corsheaders',
     'rest_framework',
@@ -163,14 +165,14 @@ CHANNEL_LAYERS = {
 }
 
 
-LOGGING = {
-    'version': 1,
-    'loggers': {
-        'requests': {
-            'level': 'WARNING',
-        },
-    }
-}
+# LOGGING = {
+#     'version': 1,
+#     'loggers': {
+#         'requests': {
+#             'level': 'WARNING',
+#         },
+#     }
+# }
 
 TIME_ZONE = 'Asia/Ho_Chi_Minh'
 
