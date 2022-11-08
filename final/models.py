@@ -25,13 +25,6 @@ class Team(models.Model):
     point = models.IntegerField(default=0)
 
 
-class AnswerChoice(models.Model):
-    answer_id = models.BigAutoField(primary_key=True)
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    choice = models.ForeignKey(Choice, on_delete=models.CASCADE, null=True, blank=True)
-    question = models.ForeignKey(Question, on_delete=models.CASCADE, null=True, blank=True)
-
-
 class KeywordQuestion(models.Model):
     def __str__(self):
         return (self.question_text[:60] + '..') if len(self.question_text) > 60 else self.question_text
@@ -43,7 +36,7 @@ class KeywordQuestion(models.Model):
     order = models.SmallIntegerField()
 
 
-class AnswerKeyword(models.Model):
+class KeywordAnswer(models.Model):
     answer_id = models.BigAutoField(primary_key=True)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     answer = models.CharField(max_length=255, null=True, blank=True)
