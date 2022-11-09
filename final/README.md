@@ -27,3 +27,20 @@ Luồng chung kết
   - S: Bắt đầu câu hỏi
   - R: Dành quyền trả lời chủ đề
   - S: Xác nhận trả lời chủ đề
+
+
+- Các type để gọi socket
+
+TYPE_RESPONSE = 'send_response'
+# Turn 1
+TYPE_GET_QUESTIONS = 'get_questions'
+TYPE_START_QUESTION = 'start_question'
+TYPE_RING_BELL = 'ring_bell'
+TYPE_TIMEOUT = 'timeout'
+TYPE_ANSWER_QUESTION = 'answer_question'
+# Turn 2
+TYPE_GET_KQUESTIONS = 'get_kquestions'
+TYPE_START_KQUESTION = 'start_kquestion'
+TYPE_ANSWER_KQUESTION = 'answer_kquestion'
+TYPE_ANSWER_KEYWORD = 'answer_keyword'
+TYPE_ANSWERS_LIST = 'answers_list'
