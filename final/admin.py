@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Question, Choice, Team, AnswerChoice, KeywordQuestion, AnswerKeyword
+from .models import Question, Choice, Team
 
 
 class ChoiceInline(admin.TabularInline):
@@ -21,6 +21,3 @@ class ChoiceInline(admin.TabularInline):
 # Register your models here.
 admin.site.register(Question, QuestionAdmin)
 admin.site.register(Team)
-admin.site.register(AnswerChoice)
-admin.site.register(KeywordQuestion)
-admin.site.register(AnswerKeyword)

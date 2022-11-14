@@ -20,8 +20,8 @@ class Choice(models.Model):
 
 class Team(models.Model):
     team_id = models.BigAutoField(primary_key=True)
-    username = models.CharField(max_length=255, null=True, blank=True)
-    name = models.CharField(max_length=255)
+    team_name = models.CharField(max_length=255, null=True, blank=True)
+    socket_id = models.CharField(max_length=255, null=True, blank=True)
     point = models.IntegerField(default=0)
 
 
