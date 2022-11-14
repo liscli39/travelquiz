@@ -168,6 +168,14 @@ Server.prototype.on_teams = async function (req, func) {
 
 Server.prototype.on_questions = async function (req, func) {
   const questions = await Question.findAll({ raw: true });
+  for (const question of questions) {
+    question.choices = await Choice.findAll({ 
+      where: {
+        question_id: question.question_id,
+      },
+      raw: true,
+    });
+  }
   return func(0, questions)
 }
 
