@@ -6,13 +6,14 @@ const { sequelize, Question, Choice, Team, KeywordQuestion } = require('../model
 
 const WAIT = 0
 const PLAYING = 1
+const TURN_TIMEOUT = 30
 
 function Server() {
   this.io = null;
 
   this.sockets = {};
 
-  this.turn_countdown = 30;
+  this.turn_countdown = TURN_TIMEOUT;
   this.game_status = WAIT;
   this.round = null;
 
@@ -214,6 +215,7 @@ Server.prototype.on_start_question = async function (req, func) {
 
   server.game_status = PLAYING
   server.question = question
+  server.turn_countdown = TURN_TIMEOUT
   server.notifyAll('start_question', question)
 
   setTimeout(() => server.tickTurn(), 1000);
