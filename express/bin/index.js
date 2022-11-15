@@ -6,7 +6,7 @@ const { sequelize, Question, Choice, Team, KeywordQuestion } = require('../model
 
 const WAIT = 0
 const PLAYING = 1
-const TURN_TIMEOUT = 30
+const TURN_TIMEOUT = 3000
 
 function Server() {
   this.io = null;
@@ -231,10 +231,10 @@ Server.prototype.tickTurn = function () {
   } else if (server.turn_countdown > 0) {
     server.turn_countdown--;
     server.notifyAll("countdown", {
-      millisecond: server.turn_countdown * 1000,
+      sec: server.turn_countdown * 0.01,
     });
 
-    setTimeout(() => server.tickTurn(), 1000);
+    setTimeout(() => server.tickTurn(), 10);
   } if (server.turn_countdown < 1) {
     server.game_status = WAIT;
     server.notifyAll("timeout", {});
