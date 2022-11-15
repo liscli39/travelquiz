@@ -216,6 +216,8 @@ Server.prototype.on_start_question = async function (req, func) {
   server.game_status = PLAYING
   server.question = question
   server.turn_countdown = TURN_TIMEOUT
+  server.flag = null
+
   server.notifyAll('start_question', question)
 
   setTimeout(() => server.tickTurn(), 1000);
@@ -235,7 +237,7 @@ Server.prototype.tickTurn = function () {
     });
 
     setTimeout(() => server.tickTurn(), 10);
-  } if (server.turn_countdown < 1) {
+  } else if (server.turn_countdown < 1) {
     server.game_status = WAIT;
     server.notifyAll("timeout", {});
   }
