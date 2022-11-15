@@ -139,9 +139,9 @@ Server.prototype.on_login = async function (req, func) {
     raw: true
   });
 
-  if (team && team.socket_id != null) {
-    return func(400, 'Team ID logined')
-  }
+  // if (team && team.socket_id != null) {
+  //   return func(400, 'Team ID logined')
+  // }
 
   console.log(team_id, team_name, req.socket_id);
   if (!team) {
