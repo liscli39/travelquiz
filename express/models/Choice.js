@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
         primaryKey: true
       },
       choice_text: DataTypes.STRING,
-      is_correct: DataTypes.STRING,
+      is_correct: DataTypes.BOOLEAN,
       question_id: DataTypes.INTEGER,
     },
     {

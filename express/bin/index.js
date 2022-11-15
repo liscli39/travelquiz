@@ -11,10 +11,10 @@ function Server() {
   this.io = null;
 
   this.sockets = {};
-  this.teams = [];
 
-  this.turn_countdown = 4000;
+  this.turn_countdown = 4;
   this.game_status = WAIT;
+  this.round = null;
 
   this.question = null;
   this.flag = null;
@@ -166,6 +166,18 @@ Server.prototype.on_teams = async function (req, func) {
   return func(0, teams)
 }
 
+Server.prototype.on_start_round = function (req, func) {
+  const server = this;
+  const { round } = req.args;
+
+  server.notifyAll('start_round', {
+    round,
+  })
+  
+  server.round = round;
+  return func(0, 'ok')
+}
+
 Server.prototype.on_questions = async function (req, func) {
   const questions = await Question.findAll({ raw: true });
   for (const question of questions) {
@@ -173,7 +185,6 @@ Server.prototype.on_questions = async function (req, func) {
       where: {
         question_id: question.question_id,
       },
-      raw: true,
     });
   }
   return func(0, questions)
@@ -219,7 +230,7 @@ Server.prototype.tickTurn = function () {
     });
 
     setTimeout(() => server.tickTurn(), 1000);
-  } if (server.turn_countdown <= 0) {
+  } if (server.turn_countdown < 1) {
     server.game_status = WAIT;
     server.notifyAll("timeout", {});
   }
