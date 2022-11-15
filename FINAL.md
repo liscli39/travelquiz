@@ -41,6 +41,12 @@ rpc("login", {
 ### Các lệnh trong game
 
 - Bắt đầu vòng `rpc("start_round", { round: 1 })`
+  - Thông báo: `{"e":"start_round","args":{ "round": 1 }}`
+
+- Danh sách các đội `rpc("teams", {})`
+
+- Đăng nhập của đội `rpc("login", {"team_id": 1, "team_name": "Team 1"})`
+  - Thống báo:  `{"e":"login","args":{ "team_id": 1 }}`
 
 Vòng 1
 - Danh sách câu hỏi `rpc("questions", {})`

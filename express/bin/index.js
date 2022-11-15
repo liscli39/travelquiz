@@ -158,6 +158,9 @@ Server.prototype.on_login = async function (req, func) {
     });
   }
 
+  this.notifyAll('login', {
+    team_id,
+  })
   return func(0, 'ok')
 }
 
