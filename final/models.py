@@ -15,7 +15,8 @@ class Choice(models.Model):
     choice_id = models.BigAutoField(primary_key=True)
     choice_text = models.TextField()
     is_correct = models.BooleanField(default=False)
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question
+     on_delete=models.CASCADE)
 
 
 class Team(models.Model):

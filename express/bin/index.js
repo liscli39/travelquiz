@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const http = require('http');
 const socketio = require("socket.io");
-const { sequelize, Question, Choice, Team } = require('../models/index');
+const { sequelize, Question, Choice, Team, KeywordQuestion } = require('../models/index');
 
 const WAIT = 0
 const PLAYING = 1
@@ -12,7 +12,7 @@ function Server() {
 
   this.sockets = {};
 
-  this.turn_countdown = 4;
+  this.turn_countdown = 30;
   this.game_status = WAIT;
   this.round = null;
 
@@ -289,7 +289,11 @@ Server.prototype.on_answer = async function (req, func) {
   func(0, "ok");
 }
 
-Server.prototype.on_kquestions = function (req, func) { }
+Server.prototype.on_kquestions = async function (req, func) {
+  const questions = await KeywordQuestion.findAll({ raw: true });
+
+  return func(0, questions)
+}
 Server.prototype.on_start_kgame = function (req, func) { }
 
 new Server().start()
