@@ -2,7 +2,15 @@ const express = require('express');
 const app = express();
 const http = require('http');
 const socketio = require("socket.io");
-const { sequelize, Question, Choice, Team, KeywordQuestion } = require('../models/index');
+const {
+  sequelize,
+  Question,
+  Choice,
+  Team,
+  KeywordQuestion,
+  Answer,
+  KeywordAnswer,
+} = require('../models/index');
 
 const WAIT = 0
 const PLAYING = 1
@@ -132,7 +140,7 @@ Server.prototype.notifyTo = async function (to, event, args) {
 Server.prototype.on_login = async function (req, func) {
   const { team_id, team_name } = req.args;
 
-  let team = await Team.findOne({ 
+  let team = await Team.findOne({
     where: {
       team_id: team_id,
     },
@@ -145,7 +153,7 @@ Server.prototype.on_login = async function (req, func) {
 
   console.log(team_id, team_name, req.socket_id);
   if (!team) {
-    team = await Team.create({ 
+    team = await Team.create({
       team_id: team_id,
       team_name: team_name,
       socket_id: req.socket_id,
@@ -177,7 +185,7 @@ Server.prototype.on_start_round = function (req, func) {
   server.notifyAll('start_round', {
     round,
   })
-  
+
   server.round = round;
   return func(0, 'ok')
 }
@@ -185,7 +193,7 @@ Server.prototype.on_start_round = function (req, func) {
 Server.prototype.on_questions = async function (req, func) {
   const questions = await Question.findAll({ raw: true });
   for (const question of questions) {
-    question.choices = await Choice.findAll({ 
+    question.choices = await Choice.findAll({
       where: {
         question_id: question.question_id,
       },
@@ -198,7 +206,7 @@ Server.prototype.on_start_question = async function (req, func) {
   const server = this;
   const { question_id } = req.args;
 
-  const question = await Question.findOne({ 
+  const question = await Question.findOne({
     where: {
       question_id,
     },
@@ -206,7 +214,7 @@ Server.prototype.on_start_question = async function (req, func) {
   });
   if (!question) return func(400, "Question not exists");
 
-  question.choices = await Choice.findAll({ 
+  question.choices = await Choice.findAll({
     where: {
       question_id,
     },
@@ -274,6 +282,12 @@ Server.prototype.on_answer = async function (req, func) {
       is_correct: false
     })
 
+    await Answer.create({
+      team_id,
+      choice_id,
+      question_id: server.question.question_id
+    });
+
     return func(400, "Choice incorrect!")
   }
 
@@ -281,15 +295,22 @@ Server.prototype.on_answer = async function (req, func) {
     where: {
       team_id,
     },
-    raw: true,
   });
   team.point = server.question.point || 50;
+  team.save()
 
   this.game_status = WAIT;
   server.notifyAll("answer", {
     team_id, choice_id,
     is_correct: true
   })
+
+  await Answer.create({
+    team_id,
+    choice_id,
+    question_id: server.question.question_id
+  });
+
   func(0, "ok");
 }
 
@@ -298,6 +319,70 @@ Server.prototype.on_kquestions = async function (req, func) {
 
   return func(0, questions)
 }
-Server.prototype.on_start_kgame = function (req, func) { }
+
+Server.prototype.on_start_kquestion = async function (req, func) {
+  const server = this;
+  const { question_id } = req.args;
+
+  const question = await KeywordQuestion.findOne({
+    where: {
+      question_id,
+    },
+    raw: true
+  });
+  if (!question) return func(400, "Question not exists");
+
+  server.game_status = PLAYING
+  server.question = question
+  server.turn_countdown = TURN_TIMEOUT
+  server.flag = null
+
+  server.notifyAll('start_kquestion', question)
+
+  setTimeout(() => server.tickTurn(), 1000);
+
+  return func(0, 'ok')
+}
+
+Server.prototype.on_kanswer = async function (req, func) {
+  const server = this;
+
+  if (server.game_status != PLAYING || server.question == null) return func(400, "Question not start");
+  const { team_id, answer } = req.args;
+
+  let is_correct = false;
+  if (answer && answer.toLowerCase() == server.question.keyword.toLowerCase()) {
+    is_correct = true;
+
+    const team = await Team.findOne({
+      where: {
+        team_id,
+      },
+    });
+    team.point = server.question.point || 50;
+    team.save()
+  }
+
+  await KeywordAnswer.create({
+    team_id,
+    answer,
+    question_id: server.question.question_id,
+    is_correct,
+  })
+
+  func(0, "ok");
+}
+
+Server.prototype.on_kanswers = async function (req, func) {
+  const server = this;
+
+  const answers = await KeywordAnswer.findAll({
+    where: {
+      question_id: server.question.question_id,
+    }
+  });
+
+  func(0, answers);
+}
 
 new Server().start()

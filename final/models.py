@@ -15,16 +15,7 @@ class Choice(models.Model):
     choice_id = models.BigAutoField(primary_key=True)
     choice_text = models.TextField()
     is_correct = models.BooleanField(default=False)
-    question = models.ForeignKey(Question
-     on_delete=models.CASCADE)
-
-
-class Team(models.Model):
-    team_id = models.BigAutoField(primary_key=True)
-    team_name = models.CharField(max_length=255, null=True, blank=True)
-    socket_id = models.CharField(max_length=255, null=True, blank=True)
-    point = models.IntegerField(default=0)
-
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
 
 class KeywordQuestion(models.Model):
     def __str__(self):
@@ -37,8 +28,23 @@ class KeywordQuestion(models.Model):
     order = models.SmallIntegerField()
 
 
+class Team(models.Model):
+    team_id = models.BigAutoField(primary_key=True)
+    team_name = models.CharField(max_length=255, null=True, blank=True)
+    socket_id = models.CharField(max_length=255, null=True, blank=True)
+    point = models.IntegerField(default=0)
+
+
+class Answer(models.Model):
+    answer_id = models.BigAutoField(primary_key=True)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    choice = models.ForeignKey(Choice, on_delete=models.CASCADE, null=True, blank=True)
+    question = models.ForeignKey(KeywordQuestion, on_delete=models.CASCADE, null=True, blank=True)
+
+
 class KeywordAnswer(models.Model):
     answer_id = models.BigAutoField(primary_key=True)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     answer = models.CharField(max_length=255, null=True, blank=True)
     question = models.ForeignKey(KeywordQuestion, on_delete=models.CASCADE, null=True, blank=True)
+    is_correct = models.BooleanField(default=False)

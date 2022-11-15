@@ -65,3 +65,11 @@ Vòng 1
 Vòng 2
 
 - Danh sách câu hỏi `rpc("kquestions", {})`
+
+- Bắt đầu câu hỏi `rpc("start_kquestion", { question_id: 1 })`
+  - Thông báo: `{"e":"start_kquestion","args":{ "question_id": 1, ... }}`
+  - Đếm ngược: `{"e":"countdown","args":{"sec":3999}}`
+  - Hết giờ: `{"e":"timeout","args":{}}`
+
+- Trả lời `rpc("kanswer", { team_id: 1, answer: "keyword" })`
+- Danh sách câu trả lời `rpc("kanswers", { question_id: 1 })`
