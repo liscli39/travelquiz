@@ -231,7 +231,7 @@ Server.prototype.tickTurn = function () {
   } else if (server.turn_countdown > 0) {
     server.turn_countdown--;
     server.notifyAll("countdown", {
-      sec: server.turn_countdown,
+      millisecond: server.turn_countdown * 1000,
     });
 
     setTimeout(() => server.tickTurn(), 1000);
