@@ -13,7 +13,8 @@ const {
 } = require('../models/index');
 
 const WAIT = 0
-const PLAYING = 1
+const COUNTDOWN = 1
+const ANSWER = 2
 const TURN_TIMEOUT = 3000
 
 function Server() {
@@ -221,7 +222,7 @@ Server.prototype.on_start_question = async function (req, func) {
     raw: true,
   });
 
-  server.game_status = PLAYING
+  server.game_status = COUNTDOWN
   server.question = question
   server.turn_countdown = TURN_TIMEOUT
   server.flag = null
@@ -236,7 +237,7 @@ Server.prototype.on_start_question = async function (req, func) {
 Server.prototype.tickTurn = function () {
   const server = this;
 
-  if (server.game_status != PLAYING) {
+  if (server.game_status != COUNTDOWN) {
 
   } else if (server.turn_countdown > 0) {
     server.turn_countdown--;
@@ -253,10 +254,10 @@ Server.prototype.tickTurn = function () {
 
 Server.prototype.on_ringbell = async function (req, func) {
   if (this.flag) return func(400, "Out turn");
-  if (this.game_status != PLAYING) return func(400, "Question not start");
+  if (this.game_status != COUNTDOWN) return func(400, "Question not start");
 
   const server = this;
-  server.game_status = WAIT;
+  server.game_status = ANSWER;
 
   const team = await Team.findOne({
     where: {
@@ -271,7 +272,7 @@ Server.prototype.on_ringbell = async function (req, func) {
 }
 
 Server.prototype.on_answer = async function (req, func) {
-  if (this.game_status != PLAYING || this.question == null) return func(400, "Question not start");
+  if (this.question == null) return func(400, "Question not start");
   const { team_id, choice_id } = req.args;
 
   const server = this;
@@ -332,7 +333,7 @@ Server.prototype.on_start_kquestion = async function (req, func) {
   });
   if (!question) return func(400, "Question not exists");
 
-  server.game_status = PLAYING
+  server.game_status = COUNTDOWN
   server.question = question
   server.turn_countdown = TURN_TIMEOUT
   server.flag = null
@@ -347,7 +348,7 @@ Server.prototype.on_start_kquestion = async function (req, func) {
 Server.prototype.on_kanswer = async function (req, func) {
   const server = this;
 
-  if (server.game_status != PLAYING || server.question == null) return func(400, "Question not start");
+  if (server.game_status == WAIT || server.question == null) return func(400, "Question not start");
   const { team_id, answer } = req.args;
 
   let is_correct = false;
