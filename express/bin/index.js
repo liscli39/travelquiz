@@ -330,7 +330,7 @@ Server.prototype.on_start_kquestion = async function (req, func) {
   });
   if (!question) return func(400, "Question not exists");
 
-  question.image = new URL(process.env.API_HOST + '/media/' + q.image)
+  question.image = new URL(process.env.API_HOST + '/media/' + question.image)
 
   server.game_status = COUNTDOWN
   server.question = question
