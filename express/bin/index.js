@@ -152,7 +152,6 @@ Server.prototype.on_login = async function (req, func) {
   //   return func(400, 'Team ID logined')
   // }
 
-  console.log(team_id, team_name, req.socket_id);
   if (!team) {
     team = await Team.create({
       team_id: team_id,
@@ -211,7 +210,6 @@ Server.prototype.on_start_question = async function (req, func) {
     where: {
       question_id,
     },
-    raw: true
   });
   if (!question) return func(400, "Question not exists");
 
@@ -219,7 +217,6 @@ Server.prototype.on_start_question = async function (req, func) {
     where: {
       question_id,
     },
-    raw: true,
   });
 
   server.game_status = COUNTDOWN
