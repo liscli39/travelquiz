@@ -84,6 +84,7 @@ Server.prototype.onConnected = function (socket) {
     var method = server[func_name];
 
     req.socket_id = socket.id;
+    req.host = socket.handshake.headers.host;
     if (typeof method === "function") {
       method.call(server, req, function (err, ret) {
         socket.emit("rpc_ret", {
@@ -315,7 +316,7 @@ Server.prototype.on_answer = async function (req, func) {
 Server.prototype.on_kquestions = async function (req, func) {
   const questions = await KeywordQuestion.findAll({ raw: true });
 
-  return func(0, questions)
+  return func(0, questions.map(q => ({ ...q, image: new URL(process.env.API_HOST + '/media/' + q.image) })))
 }
 
 Server.prototype.on_start_kquestion = async function (req, func) {
@@ -326,9 +327,10 @@ Server.prototype.on_start_kquestion = async function (req, func) {
     where: {
       question_id,
     },
-    raw: true
   });
   if (!question) return func(400, "Question not exists");
+
+  question.image = new URL(process.env.API_HOST + '/media/' + q.image)
 
   server.game_status = COUNTDOWN
   server.question = question

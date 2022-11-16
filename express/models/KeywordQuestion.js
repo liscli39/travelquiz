@@ -21,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      tableName: 'final_keyword_question',
+      tableName: 'final_keywordquestion',
       modelName: 'KeywordQuestion',
       freezeTableName: true,
       timestamps: false,

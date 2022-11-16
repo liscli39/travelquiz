@@ -36,7 +36,9 @@ services:
     container_name: travelquiz_final
     build: ./express
     volumes:
-      - ./express:/usr/src/app
+      - ./express:/usr/src/
+    environment:
+      - API_HOST=http://localhost:9000
     ports:
       - "5000:5000"
     depends_on:

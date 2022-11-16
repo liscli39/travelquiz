@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      tableName: 'final_keyword_answer',
+      tableName: 'final_keywordanswer',
       modelName: 'KeywordAnswer',
       freezeTableName: true,
       timestamps: false,

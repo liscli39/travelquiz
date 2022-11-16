@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Question, Choice, Team
+from .models import Question, Choice, Team, KeywordQuestion
 
 
 class ChoiceInline(admin.TabularInline):
@@ -20,4 +20,5 @@ class ChoiceInline(admin.TabularInline):
 
 # Register your models here.
 admin.site.register(Question, QuestionAdmin)
+admin.site.register(KeywordQuestion, list_display = ('question_text', 'keyword', 'order'), list_editable=('order',))
 admin.site.register(Team)
