@@ -73,3 +73,6 @@ Vòng 2
 
 - Trả lời `rpc("kanswer", { team_id: 1, answer: "keyword" })`
 - Danh sách câu trả lời `rpc("kanswers", { question_id: 1 })`
+
+- Xác nhận câu trả lời chủ đề `rpc("kverify", { team_id: 1, is_correct: true })`
+  - Thông báo: `{"e":"kverify","args":{ "team_id": 1, ... }}`
