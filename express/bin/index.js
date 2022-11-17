@@ -348,7 +348,7 @@ Server.prototype.on_kanswer = async function (req, func) {
   const server = this;
 
   if (server.game_status == WAIT || server.question == null) return func(400, "Question not start");
-  const { team_id, answer } = req.args;
+  const { team_id, keyword } = req.args;
   const team = await Team.findOne({
     where: {
       team_id,
@@ -356,7 +356,7 @@ Server.prototype.on_kanswer = async function (req, func) {
   });
 
   let is_correct = false;
-  if (answer && answer.toLowerCase() == server.question.keyword.toLowerCase()) {
+  if (keyword && keyword.toLowerCase() == server.question.keyword.toLowerCase()) {
     is_correct = true;
 
     team.point = server.question.point || 50;
@@ -367,7 +367,7 @@ Server.prototype.on_kanswer = async function (req, func) {
   server.notifyAll('kanswer', {
     team_id,
     team_name: team.team_name,
-    answer,
+    answer: keyword,
     is_correct,
     sec: 30 - (server.turn_countdown * 0.01),
     team_point: team.point,
@@ -375,7 +375,7 @@ Server.prototype.on_kanswer = async function (req, func) {
 
   await KeywordAnswer.create({
     team_id,
-    answer,
+    answer: keyword,
     question_id: server.question.question_id,
     is_correct,
   })
