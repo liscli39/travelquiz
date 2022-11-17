@@ -176,7 +176,7 @@ Server.prototype.on_login = async function (req, func) {
 
 Server.prototype.on_teams = async function (req, func) {
   const teams = await Team.findAll({
-    order: ['points']
+    order: ['point']
   });
   return func(0, teams)
 }
@@ -426,7 +426,7 @@ Server.prototype.on_kverify = async function (req, func) {
   });
 
   if (is_correct) {
-    team.point = server.question.point || 100;
+    team.point = 100;
   } else {
     team.is_active = false;
   }
