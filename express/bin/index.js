@@ -361,18 +361,19 @@ Server.prototype.on_kanswer = async function (req, func) {
     });
     team.point = server.question.point || 50;
     team.save()
+
+    server.notifyAll('kanswer', {
+      team_id,
+      team_name: team.team_name,
+      answer,
+      is_correct,
+    })
   }
 
   await KeywordAnswer.create({
     team_id,
     answer,
     question_id: server.question.question_id,
-    is_correct,
-  })
-
-  server.notifyAll('kanswer', {
-    team_id,
-    answer,
     is_correct,
   })
 
