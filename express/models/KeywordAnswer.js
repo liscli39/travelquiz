@@ -17,6 +17,7 @@ module.exports = (sequelize, DataTypes) => {
       team_id: DataTypes.INTEGER,
       question_id: DataTypes.INTEGER,
       answer: DataTypes.STRING,
+      sec: DataTypes.INTEGER,
     },
     {
       sequelize,

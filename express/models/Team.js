@@ -17,6 +17,7 @@ module.exports = (sequelize, DataTypes) => {
       team_name: DataTypes.STRING,
       socket_id: DataTypes.STRING,
       point: DataTypes.INTEGER,
+      is_active: DataTypes.BOOLEAN,
     },
     {
       sequelize,

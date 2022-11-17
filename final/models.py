@@ -33,6 +33,7 @@ class Team(models.Model):
     team_name = models.CharField(max_length=255, null=True, blank=True)
     socket_id = models.CharField(max_length=255, null=True, blank=True)
     point = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
 
 
 class Answer(models.Model):
@@ -48,3 +49,4 @@ class KeywordAnswer(models.Model):
     answer = models.CharField(max_length=255, null=True, blank=True)
     question = models.ForeignKey(KeywordQuestion, on_delete=models.CASCADE, null=True, blank=True)
     is_correct = models.BooleanField(default=False)
+    sec = models.IntegerField(default=None, null=True, blank=True)

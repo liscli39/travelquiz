@@ -175,7 +175,9 @@ Server.prototype.on_login = async function (req, func) {
 }
 
 Server.prototype.on_teams = async function (req, func) {
-  const teams = await Team.findAll({ raw: true });
+  const teams = await Team.findAll({
+    order: ['points']
+  });
   return func(0, teams)
 }
 
@@ -337,7 +339,24 @@ Server.prototype.on_start_kquestion = async function (req, func) {
   server.turn_countdown = TURN_TIMEOUT
   server.flag = null
 
-  server.notifyAll('start_kquestion', question)
+  // ---------------------------------------------------
+  const teams = await Team.findAll({
+    where: {
+      is_active: false,
+    },
+    raw: true,
+  });
+  const excludes = teams.map(t => t.socket_id);
+
+  for (const socket of Object.values(this.sockets)) {
+    if (!excludes.includes(socket.socket_id)) {
+      socket.emit("notify", {
+        e: 'start_kquestion',
+        args: question,
+      })
+    }
+  }
+  // ---------------------------------------------------
 
   setTimeout(() => server.tickTurn(), 1000);
 
@@ -393,6 +412,34 @@ Server.prototype.on_kanswers = async function (req, func) {
   });
 
   func(0, answers);
+}
+
+Server.prototype.on_kverify = async function (req, func) {
+  const server = this;
+
+  if (server.game_status == WAIT || server.question == null) return func(400, "Question not start");
+  const { team_id, is_correct } = req.args;
+  const team = await Team.findOne({
+    where: {
+      team_id,
+    },
+  });
+
+  if (is_correct) {
+    team.point = server.question.point || 100;
+  } else {
+    team.is_active = false;
+  }
+
+  team.save()
+  server.notifyAll('kverify', {
+    team_id,
+    team_name: team.team_name,
+    is_correct,
+    point: team.point,
+  })
+
+  func(0, "ok");
 }
 
 new Server().start()
