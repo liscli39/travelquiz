@@ -369,7 +369,7 @@ Server.prototype.on_kanswer = async function (req, func) {
     team_name: team.team_name,
     answer,
     is_correct,
-    sec: server.turn_countdown * 0.01,
+    sec: 30 - (server.turn_countdown * 0.01),
     team_point: team.point,
   })
 
