@@ -367,7 +367,7 @@ Server.prototype.on_kanswer = async function (req, func) {
   server.notifyAll('kanswer', {
     team_id,
     team_name: team.team_name,
-    answer: keyword,
+    keyword,
     is_correct,
     sec: 30 - (server.turn_countdown * 0.01),
     point: team.point,
