@@ -370,6 +370,12 @@ Server.prototype.on_kanswer = async function (req, func) {
     is_correct,
   })
 
+  server.notifyAll('kanswer', {
+    team_id,
+    answer,
+    is_correct,
+  })
+
   func(0, "ok");
 }
 
