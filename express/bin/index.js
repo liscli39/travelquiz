@@ -349,26 +349,27 @@ Server.prototype.on_kanswer = async function (req, func) {
 
   if (server.game_status == WAIT || server.question == null) return func(400, "Question not start");
   const { team_id, answer } = req.args;
+  const team = await Team.findOne({
+    where: {
+      team_id,
+    },
+  });
 
   let is_correct = false;
   if (answer && answer.toLowerCase() == server.question.keyword.toLowerCase()) {
     is_correct = true;
 
-    const team = await Team.findOne({
-      where: {
-        team_id,
-      },
-    });
     team.point = server.question.point || 50;
     team.save()
 
-    server.notifyAll('kanswer', {
-      team_id,
-      team_name: team.team_name,
-      answer,
-      is_correct,
-    })
   }
+
+  server.notifyAll('kanswer', {
+    team_id,
+    team_name: team.team_name,
+    answer,
+    is_correct,
+  })
 
   await KeywordAnswer.create({
     team_id,
