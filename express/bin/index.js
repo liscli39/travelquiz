@@ -370,7 +370,7 @@ Server.prototype.on_kanswer = async function (req, func) {
     answer: keyword,
     is_correct,
     sec: 30 - (server.turn_countdown * 0.01),
-    team_point: team.point,
+    point: team.point,
   })
 
   await KeywordAnswer.create({
