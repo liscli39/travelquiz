@@ -445,7 +445,7 @@ Server.prototype.on_top_first = async function (req, func) {
     order: [['point_first', 'DESC']],
   });
 
-  this.notifyAll('top_first', teams)
+  this.notifyAll('top_first', { teams })
   return func(0, 'ok')
 }
 
@@ -454,7 +454,7 @@ Server.prototype.on_top_second = async function (req, func) {
     order: [['point_second', 'DESC']],
   });
 
-  this.notifyAll('top_second', teams)
+  this.notifyAll('top_second', { teams })
   return func(0, 'ok')
 }
 
