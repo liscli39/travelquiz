@@ -32,7 +32,8 @@ class Team(models.Model):
     team_id = models.BigAutoField(primary_key=True)
     team_name = models.CharField(max_length=255, null=True, blank=True)
     socket_id = models.CharField(max_length=255, null=True, blank=True)
-    point = models.IntegerField(default=0)
+    point_first = models.IntegerField(default=0)
+    point_second = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
 
 

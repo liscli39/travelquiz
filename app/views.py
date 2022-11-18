@@ -13,7 +13,6 @@ from app.serializer import LoginSerializer, RegisterSerializer, QuestionDetailSe
     WeekSerializer
 from app.utils.encryptor import PrimaryKeyEncryptor
 from app.utils.enum import Enum
-from app.utils.common import send_to_channel_room
 
 from threading import Timer
 from datetime import datetime
@@ -258,7 +257,6 @@ class GroupView(APIView):
             serializer = GroupSerializer(group)
             data = serializer.data
 
-            send_to_channel_room(data['group_id'], 'cancel_room', 0)
             GroupUser.objects.filter(group=group).delete()
             group.delete()
 
@@ -287,7 +285,6 @@ class GroupDetailView(APIView):
         serializer = GroupSerializer(group)
         data = serializer.data
 
-        send_to_channel_room(data['group_id'], 'cancel_room', 0)
         GroupUser.objects.filter(group=group).delete()
         group.delete()
 
@@ -314,7 +311,6 @@ class GroupDetailView(APIView):
         GroupUser.objects.filter(group=group, status=Enum.USER_GROUP_STATUS_READY) \
             .update(status=Enum.USER_GROUP_STATUS_INGAME)
 
-        send_to_channel_room(group_id, 'game_start', not_ready_list)
         return Response({"result": "ok"})
 
 
@@ -335,7 +331,6 @@ class GroupJoinView(APIView):
             return Response({'error': 'INVALID_PARAMS'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer.save()  
-        send_to_channel_room(group_id, 'join_room', user.user_id)
 
         return Response({"result": "ok"})
 
@@ -355,7 +350,6 @@ class GroupReadyView(APIView):
 
         group_user.status = Enum.USER_GROUP_STATUS_READY
         group_user.save()
-        send_to_channel_room(group_id, 'ready_play', user.user_id)
 
         return Response({"result": "ok"})
 
@@ -443,7 +437,6 @@ class GroupQuestionDetailView(APIView):
         if completed_count >= group_user_count:
             group.status = Enum.GROUP_STATUS_FINISHED
             group.save()
-            send_to_channel_room(group_id, 'gameover', 0)
 
         return Response({'result': 'ok'},  status=status.HTTP_200_OK)
 

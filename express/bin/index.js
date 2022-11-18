@@ -297,7 +297,7 @@ Server.prototype.on_answer = async function (req, func) {
       team_id,
     },
   });
-  team.point = server.question.point || 50;
+  team.point_first = server.question.point || 50;
   team.save()
 
   this.game_status = WAIT;
@@ -378,9 +378,8 @@ Server.prototype.on_kanswer = async function (req, func) {
   if (keyword && keyword.toLowerCase() == server.question.keyword.toLowerCase()) {
     is_correct = true;
 
-    team.point = server.question.point || 50;
+    team.point_second = server.question.point || 50;
     team.save()
-
   }
 
   server.notifyAll('kanswer', {
@@ -440,6 +439,24 @@ Server.prototype.on_kverify = async function (req, func) {
   })
 
   func(0, "ok");
+}
+
+Server.prototype.on_top_first = async function (req, func) {
+  const teams = await Team.findAll({
+    order: ['-point_first']
+  });
+
+  this.notifyAll('top_first', teams.map(t => ({ ...t, point: t.point_first })))
+  return func(0, teams)
+}
+
+Server.prototype.on_top_second = async function (req, func) {
+  const teams = await Team.findAll({
+    order: ['-point_second']
+  });
+
+  this.notifyAll('top_second', teams.map(t => ({ ...t, point: t.point_second })))
+  return func(0, teams)
 }
 
 new Server().start()
