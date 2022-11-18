@@ -158,7 +158,8 @@ Server.prototype.on_login = async function (req, func) {
       team_id: team_id,
       team_name: team_name,
       socket_id: req.socket_id,
-      point: 0,
+      point_first: 0,
+      point_second: 0,
     });
   } else {
     await Team.update({ socket_id: req.socket_id }, {
@@ -175,9 +176,7 @@ Server.prototype.on_login = async function (req, func) {
 }
 
 Server.prototype.on_teams = async function (req, func) {
-  const teams = await Team.findAll({
-    order: ['point']
-  });
+  const teams = await Team.findAll();
   return func(0, teams)
 }
 
@@ -388,7 +387,7 @@ Server.prototype.on_kanswer = async function (req, func) {
     keyword,
     is_correct,
     sec: 30 - (server.turn_countdown * 0.01),
-    point: team.point,
+    point: team.point_second,
   })
 
   await KeywordAnswer.create({
@@ -425,7 +424,7 @@ Server.prototype.on_kverify = async function (req, func) {
   });
 
   if (is_correct) {
-    team.point = 100;
+    team.point_second = 100;
   } else {
     team.is_active = false;
   }
@@ -435,7 +434,7 @@ Server.prototype.on_kverify = async function (req, func) {
     team_id,
     team_name: team.team_name,
     is_correct,
-    point: team.point,
+    point: team.point_second,
   })
 
   func(0, "ok");
