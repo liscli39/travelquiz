@@ -442,19 +442,21 @@ Server.prototype.on_kverify = async function (req, func) {
 
 Server.prototype.on_top_first = async function (req, func) {
   const teams = await Team.findAll({
-    order: [['point_first', 'DESC']]
+    order: [['point_first', 'DESC']],
+    raw: true,
   });
 
-  this.notifyAll('top_first', [...teams].map(t => ({ ...t, point: t.point_first })))
+  this.notifyAll('top_first', teams.map(t => ({ ...t, point: t.point_first })))
   return func(0, 'ok')
 }
 
 Server.prototype.on_top_second = async function (req, func) {
   const teams = await Team.findAll({
-    order: [['point_second', 'DESC']]
+    order: [['point_second', 'DESC']],
+    raw: true,
   });
 
-  this.notifyAll('top_second', [...teams].map(t => ({ ...t, point: t.point_second })))
+  this.notifyAll('top_second', teams.map(t => ({ ...t, point: t.point_second })))
   return func(0, 'ok')
 }
 
