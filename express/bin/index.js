@@ -446,7 +446,7 @@ Server.prototype.on_top_first = async function (req, func) {
   });
 
   this.notifyAll('top_first', teams.map(t => ({ ...t, point: t.point_first })))
-  return func(0, teams)
+  return func(0, 'ok')
 }
 
 Server.prototype.on_top_second = async function (req, func) {
@@ -455,7 +455,7 @@ Server.prototype.on_top_second = async function (req, func) {
   });
 
   this.notifyAll('top_second', teams.map(t => ({ ...t, point: t.point_second })))
-  return func(0, teams)
+  return func(0, 'ok')
 }
 
 new Server().start()
