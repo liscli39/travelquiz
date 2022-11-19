@@ -16,6 +16,7 @@ const WAIT = 0
 const COUNTDOWN = 1
 const ANSWER = 2
 const TURN_TIMEOUT = 3000
+const ANSWER_TIMEOUT = 300
 
 function Server() {
   this.io = null;
@@ -28,6 +29,7 @@ function Server() {
 
   this.question = null;
   this.flag = null;
+  this.answered = null;
 }
 
 Server.prototype.start = async function (instance_id) {
@@ -105,10 +107,10 @@ Server.prototype.onConnected = function (socket) {
 };
 
 Server.prototype.onDisconnected = async function (socket) {
-  var server = this;
+  const server = this;
   console.log("Disconnect from " + socket.conn.remoteAddress);
 
-  await Team.update({ socket_id: null }, {
+  const team = await Team.findOne({
     where: {
       socket_id: socket.id,
     }
@@ -116,12 +118,14 @@ Server.prototype.onDisconnected = async function (socket) {
 
   delete server.sockets[socket.id];
   server.sockets_count--;
+  server.notifyAll("disconnect", team);
+  team.update({ socket_id: null });
 };
 
 Server.prototype.notifyAll = async function (event, args) {
   const sockets = this.sockets;
   for (const socket of Object.values(sockets)) {
-    socket.emit("notify", {
+    if (socket.socket_id != this.answered) socket.emit("notify", {
       e: event,
       args: args,
     })
@@ -225,6 +229,7 @@ Server.prototype.on_start_question = async function (req, func) {
   server.question = question
   server.turn_countdown = TURN_TIMEOUT
   server.flag = null
+  server.answered = null
 
   server.notifyAll('start_question', question)
 
@@ -233,11 +238,24 @@ Server.prototype.on_start_question = async function (req, func) {
   return func(0, 'ok')
 }
 
+Server.prototype.on_restart_question = async function (req, func) {
+  const server = this;
+
+  server.game_status = COUNTDOWN
+  server.turn_countdown = TURN_TIMEOUT
+  server.flag = null
+
+  server.notifyAll('restart_question', server.question)
+  setTimeout(() => server.tickTurn(), 1000);
+
+  return func(0, 'ok')
+}
+
 Server.prototype.tickTurn = function () {
   const server = this;
 
-  if (server.game_status != COUNTDOWN) {
-
+  if (server.game_status != COUNTDOWN && server.game_status != ANSWER) {
+    return;
   } else if (server.turn_countdown > 0) {
     server.turn_countdown--;
     server.notifyAll("countdown", {
@@ -257,6 +275,7 @@ Server.prototype.on_ringbell = async function (req, func) {
 
   const server = this;
   server.game_status = ANSWER;
+  server.turn_countdown = ANSWER_TIMEOUT;
 
   const team = await Team.findOne({
     where: {
@@ -275,6 +294,16 @@ Server.prototype.on_answer = async function (req, func) {
   const { team_id, choice_id } = req.args;
 
   const server = this;
+  server.game_status = WAIT;
+
+  const team = await Team.findOne({
+    where: {
+      team_id,
+    },
+  });
+
+  if (!server.answered) server.answered = team.socket_id;
+
   const choices = server.question.choices;
   if (!choices.find(c => c.choice_id == choice_id && c.is_correct)) {
     server.notifyAll("answer", {
@@ -291,15 +320,12 @@ Server.prototype.on_answer = async function (req, func) {
     return func(400, "Choice incorrect!")
   }
 
-  const team = await Team.findOne({
-    where: {
-      team_id,
-    },
-  });
-  team.point_first = server.question.point || 50;
+  let point_reward = server.question.point || 50;;
+  if (server.answered != team.socket_id) point_reward = 10;
+
+  team.point_first += point_reward;
   team.save()
 
-  this.game_status = WAIT;
   server.notifyAll("answer", {
     team_id, choice_id,
     is_correct: true
@@ -377,7 +403,7 @@ Server.prototype.on_kanswer = async function (req, func) {
   if (keyword && keyword.toLowerCase() == server.question.keyword.toLowerCase()) {
     is_correct = true;
 
-    team.point_second = server.question.point || 50;
+    team.point_second += server.question.point || 50;
     team.save()
   }
 
