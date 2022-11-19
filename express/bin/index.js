@@ -125,7 +125,7 @@ Server.prototype.onDisconnected = async function (socket) {
 Server.prototype.notifyAll = async function (event, args) {
   const sockets = this.sockets;
   for (const socket of Object.values(sockets)) {
-    if (!socket.socket_id || socket.socket_id != this.answered) socket.emit("notify", {
+    if (!this.answered || socket.socket_id != this.answered) socket.emit("notify", {
       e: event,
       args: args,
     })
@@ -199,8 +199,10 @@ Server.prototype.on_questions = async function (req, func) {
       where: {
         question_id: question.question_id,
       },
+      nest: true,
     });
   }
+
   return func(0, questions)
 }
 
@@ -212,6 +214,7 @@ Server.prototype.on_start_question = async function (req, func) {
     where: {
       question_id,
     },
+    raw: true,
   });
   if (!question) return func(400, "Question not exists");
 
@@ -219,6 +222,7 @@ Server.prototype.on_start_question = async function (req, func) {
     where: {
       question_id,
     },
+    nest: true,
   });
 
   server.game_status = COUNTDOWN
