@@ -125,7 +125,7 @@ Server.prototype.onDisconnected = async function (socket) {
 Server.prototype.notifyAll = async function (event, args) {
   const sockets = this.sockets;
   for (const socket of Object.values(sockets)) {
-    if (socket.socket_id != this.answered) socket.emit("notify", {
+    if (!socket.socket_id || socket.socket_id != this.answered) socket.emit("notify", {
       e: event,
       args: args,
     })
@@ -152,10 +152,6 @@ Server.prototype.on_login = async function (req, func) {
     },
     raw: true
   });
-
-  // if (team && team.socket_id != null) {
-  //   return func(400, 'Team ID logined')
-  // }
 
   if (!team) {
     team = await Team.create({
