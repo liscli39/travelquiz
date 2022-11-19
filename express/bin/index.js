@@ -294,6 +294,10 @@ Server.prototype.on_answer = async function (req, func) {
   const { team_id, choice_id } = req.args;
 
   const server = this;
+  if (server.game_status == WAIT) {
+    return func(400, "Timeout!");
+  }
+
   server.game_status = WAIT;
 
   const team = await Team.findOne({
