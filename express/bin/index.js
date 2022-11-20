@@ -119,7 +119,7 @@ Server.prototype.onDisconnected = async function (socket) {
   delete server.sockets[socket.id];
   server.sockets_count--;
   server.notifyAll("disconnect", team);
-  team.update({ socket_id: null });
+  if (team) team.update({ socket_id: null });
 };
 
 Server.prototype.notifyAll = async function (event, args) {
