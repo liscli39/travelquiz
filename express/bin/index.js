@@ -15,8 +15,8 @@ const {
 const WAIT = 0
 const COUNTDOWN = 1
 const ANSWER = 2
-const TURN_TIMEOUT = 3000
-const ANSWER_TIMEOUT = 300
+const TURN_TIMEOUT = 1500
+const ANSWER_TIMEOUT = 1500
 
 function Server() {
   this.io = null;
@@ -365,7 +365,7 @@ Server.prototype.on_start_kquestion = async function (req, func) {
 
   server.game_status = COUNTDOWN
   server.question = question
-  server.turn_countdown = 20
+  server.turn_countdown = 2000
   server.flag = null
 
   // ---------------------------------------------------
