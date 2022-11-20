@@ -16,7 +16,7 @@ const WAIT = 0
 const COUNTDOWN = 1
 const ANSWER = 2
 const TURN_TIMEOUT = 1500
-const ANSWER_TIMEOUT = 1500
+const ANSWER_TIMEOUT = 300
 
 function Server() {
   this.io = null;
