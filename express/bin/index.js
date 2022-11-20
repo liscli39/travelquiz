@@ -324,7 +324,7 @@ Server.prototype.on_answer = async function (req, func) {
     return func(400, "Choice incorrect!")
   }
 
-  let point_reward = server.question.point || 50;;
+  let point_reward = server.question.point || 10;;
   if (server.answered != team.socket_id) point_reward = 10;
 
   team.point_first += point_reward;
@@ -365,7 +365,7 @@ Server.prototype.on_start_kquestion = async function (req, func) {
 
   server.game_status = COUNTDOWN
   server.question = question
-  server.turn_countdown = TURN_TIMEOUT
+  server.turn_countdown = 20
   server.flag = null
 
   // ---------------------------------------------------
