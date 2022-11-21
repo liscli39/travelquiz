@@ -477,7 +477,6 @@ Server.prototype.on_kanswers = async function (req, func) {
 Server.prototype.on_kverify = async function (req, func) {
   const server = this;
 
-  if (server.game_status == WAIT || server.question == null) return func(400, "Question not start");
   const { team_id, is_correct } = req.args;
   const team = await Team.findOne({
     where: {
