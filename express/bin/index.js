@@ -171,6 +171,7 @@ Server.prototype.on_login = async function (req, func) {
 
   this.notifyAll('login', {
     team_id,
+    team_name,
   })
   return func(0, 'ok')
 }
@@ -311,7 +312,9 @@ Server.prototype.on_answer = async function (req, func) {
   const choices = server.question.choices;
   if (!choices.find(c => c.choice_id == choice_id && c.is_correct)) {
     server.notifyAll("answer", {
-      team_id, choice_id,
+      team_id,
+      team_name: team.team_name,
+      choice_id,
       is_correct: false
     })
 
@@ -331,7 +334,9 @@ Server.prototype.on_answer = async function (req, func) {
   team.save()
 
   server.notifyAll("answer", {
-    team_id, choice_id,
+    team_id,
+    team_name: team.team_name,
+    choice_id,
     is_correct: true
   })
 
@@ -440,8 +445,16 @@ Server.prototype.on_kanswers = async function (req, func) {
     }
   });
 
-  answers.forEach(answer => {
-    answer.sec *= 0.01
+  answers.forEach(async answer => {
+    answer.sec *= 0.01;
+
+    const team = await Team.findOne({
+      where: {
+        team_id: answer.team_id,
+      },
+    });
+
+    answer.team_name = team.team_name;
   })
 
   func(0, answers);
