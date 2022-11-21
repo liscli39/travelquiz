@@ -425,7 +425,7 @@ Server.prototype.on_kanswer = async function (req, func) {
     answer: keyword,
     question_id: server.question.question_id,
     is_correct,
-    sec: 30 - (server.turn_countdown * 0.01),
+    sec: 3000 - server.turn_countdown,
   })
 
   func(0, "ok");
