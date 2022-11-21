@@ -452,6 +452,7 @@ Server.prototype.on_kanswers = async function (req, func) {
     }
   });
 
+
   for (const answer of answers) {
     answer.sec *= 0.01;
 
@@ -459,9 +460,10 @@ Server.prototype.on_kanswers = async function (req, func) {
       where: {
         team_id: answer.team_id,
       },
+      raw: true, 
     });
 
-    answer.team_name = team.team_name;
+    answer['team_name'] = team.team_name;
   }
 
   func(0, answers);
