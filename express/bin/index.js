@@ -271,12 +271,14 @@ Server.prototype.tickTurn = function () {
 };
 
 Server.prototype.on_ringbell = async function (req, func) {
-  if (this.flag) return func(400, "Out turn");
-  if (this.game_status != COUNTDOWN) return func(400, "Question not start");
-
   const server = this;
-  server.game_status = ANSWER;
-  server.turn_countdown = ANSWER_TIMEOUT;
+  if (server.flag) return func(400, "Out turn");
+
+  if (server.round == 1) {
+    if (server.game_status != COUNTDOWN) return func(400, "Question not start");
+    server.game_status = ANSWER;
+    server.turn_countdown = ANSWER_TIMEOUT;
+  }
 
   const team = await Team.findOne({
     where: {
