@@ -425,6 +425,13 @@ Server.prototype.on_kanswer = async function (req, func) {
     point: team.point_second,
   })
 
+  await KeywordAnswer.destroy({
+    where: {
+      team_id,
+      question_id: server.question.question_id,
+    }
+  })
+
   await KeywordAnswer.create({
     team_id,
     answer: keyword,
@@ -445,7 +452,7 @@ Server.prototype.on_kanswers = async function (req, func) {
     }
   });
 
-  answers.forEach(async answer => {
+  func(0, answers.map(async answer => {
     answer.sec *= 0.01;
 
     const team = await Team.findOne({
@@ -455,9 +462,9 @@ Server.prototype.on_kanswers = async function (req, func) {
     });
 
     answer.team_name = team.team_name;
-  })
 
-  func(0, answers);
+    return answer;
+  }));
 }
 
 Server.prototype.on_kverify = async function (req, func) {
