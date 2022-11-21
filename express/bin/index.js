@@ -440,6 +440,10 @@ Server.prototype.on_kanswers = async function (req, func) {
     }
   });
 
+  answers.forEach(answer => {
+    answer.sec *= 0.01
+  })
+
   func(0, answers);
 }
 
