@@ -18,6 +18,7 @@ module.exports = (sequelize, DataTypes) => {
       question_id: DataTypes.INTEGER,
       answer: DataTypes.STRING,
       sec: DataTypes.INTEGER,
+      is_correct: DataTypes.BOOLEAN,
     },
     {
       sequelize,
