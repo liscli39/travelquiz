@@ -452,7 +452,7 @@ Server.prototype.on_kanswers = async function (req, func) {
     }
   });
 
-
+  const result = [];
   for (const answer of answers) {
     answer.sec *= 0.01;
 
@@ -462,11 +462,14 @@ Server.prototype.on_kanswers = async function (req, func) {
       },
       raw: true, 
     });
-
-    answer['team_name'] = team.team_name;
+    console.log(team, team.team_name);
+    result.push({
+      ...answer,
+      team_name: team.team_name,
+    })
   }
 
-  func(0, answers);
+  func(0, result);
 }
 
 Server.prototype.on_kverify = async function (req, func) {
