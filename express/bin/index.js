@@ -450,7 +450,6 @@ Server.prototype.on_kanswers = async function (req, func) {
     where: {
       question_id: server.question.question_id,
     },
-    nest: true,
   });
 
   const result = [];
@@ -465,7 +464,7 @@ Server.prototype.on_kanswers = async function (req, func) {
     });
 
     result.push({
-      ...answer,
+      ...answer.dataValues,
       team_name: team.team_name,
     })
   }
