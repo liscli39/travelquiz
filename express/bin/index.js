@@ -452,7 +452,7 @@ Server.prototype.on_kanswers = async function (req, func) {
     }
   });
 
-  func(0, answers.map(async answer => {
+  for (const answer of answers) {
     answer.sec *= 0.01;
 
     const team = await Team.findOne({
@@ -462,9 +462,9 @@ Server.prototype.on_kanswers = async function (req, func) {
     });
 
     answer.team_name = team.team_name;
+  }
 
-    return answer;
-  }));
+  func(0, answers);
 }
 
 Server.prototype.on_kverify = async function (req, func) {
