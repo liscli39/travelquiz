@@ -449,7 +449,8 @@ Server.prototype.on_kanswers = async function (req, func) {
   const answers = await KeywordAnswer.findAll({
     where: {
       question_id: server.question.question_id,
-    }
+    },
+    nest: true,
   });
 
   const result = [];
@@ -462,7 +463,7 @@ Server.prototype.on_kanswers = async function (req, func) {
       },
       raw: true, 
     });
-    console.log(team, team.team_name);
+
     result.push({
       ...answer,
       team_name: team.team_name,
