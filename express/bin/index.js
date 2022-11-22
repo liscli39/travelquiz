@@ -16,7 +16,6 @@ const WAIT = 0
 const COUNTDOWN = 1
 const ANSWER = 2
 const TURN_TIMEOUT = 1500
-const ANSWER_TIMEOUT = 300
 
 function Server() {
   this.io = null;
@@ -30,6 +29,8 @@ function Server() {
   this.question = null;
   this.flag = null;
   this.answered = null;
+
+  this.wrongs = {};
 }
 
 Server.prototype.start = async function (instance_id) {
@@ -124,8 +125,10 @@ Server.prototype.onDisconnected = async function (socket) {
 
 Server.prototype.notifyAll = async function (event, args) {
   const sockets = this.sockets;
+  let blocked = Object.keys(this.wrongs).filter(k => !!this.wrongs[k]);
+
   for (const socket of Object.values(sockets)) {
-    if (!this.answered || socket.socket_id != this.answered) socket.emit("notify", {
+    if (!blocked.includes(socket.id)) socket.emit("notify", {
       e: event,
       args: args,
     })
@@ -185,6 +188,7 @@ Server.prototype.on_start_round = function (req, func) {
   const server = this;
   const { round } = req.args;
 
+  server.wrongs = {};
   server.notifyAll('start_round', {
     round,
   })
@@ -218,6 +222,7 @@ Server.prototype.on_start_question = async function (req, func) {
     raw: true,
   });
   if (!question) return func(400, "Question not exists");
+  Object.keys(server.wrongs).forEach(k => server.wrongs[k]--); 
 
   question.choices = await Choice.findAll({
     where: {
@@ -255,7 +260,7 @@ Server.prototype.on_restart_question = async function (req, func) {
 Server.prototype.tickTurn = function () {
   const server = this;
 
-  if (server.game_status != COUNTDOWN && server.game_status != ANSWER) {
+  if (server.game_status != COUNTDOWN) {
     return;
   } else if (server.turn_countdown > 0) {
     server.turn_countdown--;
@@ -320,12 +325,7 @@ Server.prototype.on_answer = async function (req, func) {
       is_correct: false
     })
 
-    await Answer.create({
-      team_id,
-      choice_id,
-      question_id: server.question.question_id
-    });
-
+    server.wrongs[team.socket_id] = 2;
     return func(400, "Choice incorrect!")
   }
 
@@ -411,11 +411,26 @@ Server.prototype.on_kanswer = async function (req, func) {
   });
 
   let is_correct = false;
-  if (keyword && keyword.toLowerCase() == server.question.keyword.toLowerCase()) {
+
+  let _keyword = keyword.normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+    .replace(/\s/g, '')
+    .toLowerCase();
+
+  let _answer = server.question.keyword.normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+    .replace(/\s/g, '')
+    .toLowerCase();
+
+  if (_keyword && _keyword == _answer) {
     is_correct = true;
 
     team.point_second += server.question.point || 50;
     team.save()
+  } else {
+    server.wrongs[team.socket_id] = 9999;
   }
 
   server.notifyAll('kanswer', {
