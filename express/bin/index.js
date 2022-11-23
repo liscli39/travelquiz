@@ -15,7 +15,7 @@ const {
 const WAIT = 0
 const COUNTDOWN = 1
 const ANSWER = 2
-const TURN_TIMEOUT = 1500
+const TURN_TIMEOUT = 15
 
 function Server() {
   this.io = null;
@@ -265,10 +265,10 @@ Server.prototype.tickTurn = function () {
   } else if (server.turn_countdown > 0) {
     server.turn_countdown--;
     server.notifyAll("countdown", {
-      sec: server.turn_countdown * 0.01,
+      sec: server.turn_countdown,
     });
 
-    setTimeout(() => server.tickTurn(), 10);
+    setTimeout(() => server.tickTurn(), 1000);
   } else if (server.turn_countdown < 1) {
     server.game_status = WAIT;
     server.notifyAll("timeout", {});
@@ -282,7 +282,6 @@ Server.prototype.on_ringbell = async function (req, func) {
   if (server.round == 1) {
     if (server.game_status != COUNTDOWN) return func(400, "Question not start");
     server.game_status = ANSWER;
-    server.turn_countdown = ANSWER_TIMEOUT;
   }
 
   const team = await Team.findOne({
@@ -372,7 +371,7 @@ Server.prototype.on_start_kquestion = async function (req, func) {
 
   server.game_status = COUNTDOWN
   server.question = question
-  server.turn_countdown = 2000
+  server.turn_countdown = 20
   server.flag = null
 
   // ---------------------------------------------------
@@ -438,7 +437,7 @@ Server.prototype.on_kanswer = async function (req, func) {
     team_name: team.team_name,
     keyword,
     is_correct,
-    sec: 30 - (server.turn_countdown * 0.01),
+    sec: 20 - server.turn_countdown,
     point: team.point_second,
   })
 
@@ -454,7 +453,7 @@ Server.prototype.on_kanswer = async function (req, func) {
     answer: keyword,
     question_id: server.question.question_id,
     is_correct,
-    sec: 3000 - server.turn_countdown,
+    sec: 20 - server.turn_countdown,
   })
 
   func(0, "ok");
