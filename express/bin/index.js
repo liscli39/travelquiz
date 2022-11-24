@@ -522,11 +522,24 @@ Server.prototype.on_top_first = async function (req, func) {
 
 Server.prototype.on_top_second = async function (req, func) {
   const teams = await Team.findAll({
-    order: [['point_second', 'DESC']],
+    order: [
+      ['point_second', 'DESC'],
+      ['sec', 'ASC']
+    ],
   });
 
   this.notifyAll('top_second', { teams })
   return func(0, 'ok')
 }
+
+Server.prototype.on_top_third = async function (req, func) {
+  const teams = await Team.findAll({
+    order: [['point_third', 'DESC']],
+  });
+
+  this.notifyAll('top_third', { teams })
+  return func(0, 'ok')
+}
+
 
 new Server().start()

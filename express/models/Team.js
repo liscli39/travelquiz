@@ -18,6 +18,7 @@ module.exports = (sequelize, DataTypes) => {
       socket_id: DataTypes.STRING,
       point_first: DataTypes.INTEGER,
       point_second: DataTypes.INTEGER,
+      point_third: DataTypes.INTEGER,
       sec: DataTypes.INTEGER,
     },
     {
