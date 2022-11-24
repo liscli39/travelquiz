@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
       socket_id: DataTypes.STRING,
       point_first: DataTypes.INTEGER,
       point_second: DataTypes.INTEGER,
-      is_active: DataTypes.BOOLEAN,
+      sec: DataTypes.INTEGER,
     },
     {
       sequelize,

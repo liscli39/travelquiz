@@ -376,9 +376,6 @@ Server.prototype.on_start_kquestion = async function (req, func) {
 
   // ---------------------------------------------------
   const teams = await Team.findAll({
-    where: {
-      is_active: false,
-    },
     raw: true,
   });
   const excludes = teams.map(t => t.socket_id);
@@ -427,6 +424,7 @@ Server.prototype.on_kanswer = async function (req, func) {
     is_correct = true;
 
     team.point_second += server.question.point || 50;
+    team.sec += 20 - server.turn_countdown;
     team.save()
   } else {
     server.wrongs[team.socket_id] = 9999;
@@ -500,8 +498,6 @@ Server.prototype.on_kverify = async function (req, func) {
 
   if (is_correct) {
     team.point_second = 100;
-  } else {
-    team.is_active = false;
   }
 
   team.save()

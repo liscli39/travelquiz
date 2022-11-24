@@ -34,7 +34,9 @@ class Team(models.Model):
     socket_id = models.CharField(max_length=255, null=True, blank=True)
     point_first = models.IntegerField(default=0)
     point_second = models.IntegerField(default=0)
-    is_active = models.BooleanField(default=True)
+    point_third = models.IntegerField(default=0)
+    point_third = models.IntegerField(default=0)
+    sec = models.IntegerField(default=0)
 
 
 class Answer(models.Model):
