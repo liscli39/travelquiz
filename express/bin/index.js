@@ -125,8 +125,7 @@ Server.prototype.onDisconnected = async function (socket) {
 
 Server.prototype.notifyAll = async function (event, args) {
   const sockets = this.sockets;
-  let blocked = Object.keys(this.wrongs).filter(k => !!this.wrongs[k]);
-
+  let blocked = Object.keys(this.wrongs).filter(k => this.wrongs[k] <= 0);
   for (const socket of Object.values(sockets)) {
     if (!blocked.includes(socket.id)) socket.emit("notify", {
       e: event,
@@ -163,6 +162,8 @@ Server.prototype.on_login = async function (req, func) {
       socket_id: req.socket_id,
       point_first: 0,
       point_second: 0,
+      point_third: 0,
+      sec: 0,
     });
   } else {
     await Team.update({ socket_id: req.socket_id }, {
