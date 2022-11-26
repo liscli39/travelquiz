@@ -62,7 +62,7 @@ Server.prototype.start = async function (instance_id) {
 
 Server.prototype.onConnected = function (socket) {
   const server = this;
-  console.log("New connection from " + socket.conn.remoteAddress);
+  console.log("New connection from " + socket.conn.remoteAddress, socket.id);
 
   socket.on("rpc", function (req) {
     if (typeof req !== "object" || typeof req.f !== "string") {
@@ -85,6 +85,7 @@ Server.prototype.onConnected = function (socket) {
 
     var func_name = "on_" + req.f;
     var method = server[func_name];
+    console.log('rpc', func_name);
 
     req.socket_id = socket.id;
     req.host = socket.handshake.headers.host;
@@ -120,12 +121,16 @@ Server.prototype.onDisconnected = async function (socket) {
   delete server.sockets[socket.id];
   server.sockets_count--;
   server.notifyAll("disconnect", team);
-  if (team) team.update({ socket_id: null });
+  if (team) {
+    team.update({ socket_id: null });
+    console.log("Disconnect from team:", team.team_id, socket.id);
+  }
 };
 
 Server.prototype.notifyAll = async function (event, args) {
   const sockets = this.sockets;
-  let blocked = Object.keys(this.wrongs).filter(k => this.wrongs[k] <= 0);
+  let blocked = Object.keys(this.wrongs).filter(k => this.wrongs[k] > 0);
+  console.log('notifyAll', blocked, event, args);
   for (const socket of Object.values(sockets)) {
     if (!blocked.includes(socket.id)) socket.emit("notify", {
       e: event,
@@ -390,7 +395,11 @@ Server.prototype.on_start_kquestion = async function (req, func) {
     }
   }
   // ---------------------------------------------------
-
+  await KeywordAnswer.destroy({
+    where: {
+      question_id: server.question.question_id,
+    },
+  });
   setTimeout(() => server.tickTurn(), 1000);
 
   return func(0, 'ok')
