@@ -44,3 +44,30 @@ services:
     depends_on:
       - "mysql8"
     restart: always
+
+  game_server:
+    container_name: travelquiz_final
+    build: ./express
+    volumes:
+      - ./express:/usr/src/
+    environment:
+      - API_HOST=http://localhost:9000
+    ports:
+      - "5000:5000"
+    depends_on:
+      - "mysql8"
+    restart: always
+
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: pachinko_phpmyadmin
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=mysql8
+      - PMA_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+    ports:
+      - 8080:80
+    volumes:
+      - /sessions
