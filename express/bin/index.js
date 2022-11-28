@@ -337,10 +337,11 @@ Server.prototype.on_answer = async function (req, func) {
     return func(400, "Choice incorrect!")
   }
 
-  let point_reward = server.question.point || 10;;
+  team.point_first = team.point_first || 0;
+  let point_reward = 10;
   if (server.answered != team.socket_id) point_reward = 10;
 
-  team.point_first += point_reward;
+  team.point_first = team.point_first + point_reward;
   team.save()
 
   server.notifyAll("answer", {
