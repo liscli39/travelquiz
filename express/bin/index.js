@@ -29,6 +29,7 @@ function Server() {
   this.question = null;
   this.flag = null;
   this.answered = null;
+  this.kcount = -1;
 
   this.wrongs = {};
 }
@@ -384,6 +385,7 @@ Server.prototype.on_start_kquestion = async function (req, func) {
   server.question = question
   server.turn_countdown = 20
   server.flag = null
+  server.kcount += 1
 
   // ---------------------------------------------------
   const teams = await Team.findAll({
@@ -512,7 +514,7 @@ Server.prototype.on_kverify = async function (req, func) {
   });
 
   if (is_correct) {
-    team.point_second = 100;
+    team.point_second += (120 - server.kcount * 30);
   } else {
     server.wrongs[team.socket_id] = 9999;
   }
