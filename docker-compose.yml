@@ -68,6 +68,6 @@ services:
       - MYSQL_USER=root
       - MYSQL_PASSWORD=root
     ports:
-      - 8080:80
+      - 12080:80
     volumes:
       - /sessions

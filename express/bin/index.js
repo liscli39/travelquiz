@@ -90,6 +90,9 @@ Server.prototype.onConnected = function (socket) {
     req.socket_id = socket.id;
     req.host = socket.handshake.headers.host;
     if (typeof method === "function") {
+      let blocked = Object.keys(server.wrongs).filter(k => server.wrongs[k] > 0);
+      if (blocked.includes(req.socket_id)) return;
+
       method.call(server, req, function (err, ret) {
         socket.emit("rpc_ret", {
           seq: req.seq,
