@@ -430,14 +430,13 @@ Server.prototype.on_kanswer = async function (req, func) {
     .replace(/\s/g, '')
     .toLowerCase();
 
+  console.log('kanswer', team_id, _keyword, _answer);
   if (_keyword && _keyword == _answer) {
     is_correct = true;
 
     team.point_second += server.question.point || 50;
     team.sec += 20 - server.turn_countdown;
     team.save()
-  } else {
-    server.wrongs[team.socket_id] = 9999;
   }
 
   server.notifyAll('kanswer', {
@@ -508,6 +507,8 @@ Server.prototype.on_kverify = async function (req, func) {
 
   if (is_correct) {
     team.point_second = 100;
+  } else {
+    server.wrongs[team.socket_id] = 9999;
   }
 
   team.save()
