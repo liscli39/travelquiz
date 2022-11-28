@@ -502,6 +502,7 @@ Server.prototype.on_kanswers = async function (req, func) {
 
 Server.prototype.on_kverify = async function (req, func) {
   const server = this;
+  server.flag = null;
 
   const { team_id, is_correct } = req.args;
   const team = await Team.findOne({
