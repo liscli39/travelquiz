@@ -197,6 +197,7 @@ Server.prototype.on_start_round = function (req, func) {
   const server = this;
   const { round } = req.args;
 
+  server.flag = null;
   server.wrongs = {};
   server.notifyAll('start_round', {
     round,
@@ -257,7 +258,7 @@ Server.prototype.on_restart_question = async function (req, func) {
   const server = this;
 
   server.game_status = COUNTDOWN
-  server.turn_countdown = TURN_TIMEOUT
+  // server.turn_countdown = TURN_TIMEOUT
   server.flag = null
 
   server.notifyAll('restart_question', server.question)
