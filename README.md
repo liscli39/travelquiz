@@ -21,6 +21,10 @@ GET /profile - Lấy thông tin người dùng
     office: 'Miichisoft'
 }
 
+POST /password - Lấy mật khẩu
+- Params: phone
+- Response: { password }
+
 
 GET /questions - Danh sách id của câu hỏi
 - Response: [{ 'question_id': 'd938a485f045f141' }]

@@ -10,3 +10,4 @@ class Answer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     time = models.IntegerField(null=True, blank=True)
     question = models.ForeignKey(Question, on_delete=models.CASCADE, null=True, blank=True)
+    answer_at = models.DateTimeField(auto_now_add=True, null=True)

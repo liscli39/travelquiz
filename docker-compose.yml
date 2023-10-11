@@ -45,19 +45,6 @@ services:
       - "mysql8"
     restart: always
 
-  game_server:
-    container_name: travelquiz_final
-    build: ./express
-    volumes:
-      - ./express:/usr/src/
-    environment:
-      - API_HOST=http://localhost:9000
-    ports:
-      - "5000:5000"
-    depends_on:
-      - "mysql8"
-    restart: always
-
   phpmyadmin:
     image: phpmyadmin
     container_name: pachinko_phpmyadmin

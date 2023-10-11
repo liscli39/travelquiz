@@ -20,6 +20,14 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError()
         return data
 
+class PhoneSerializer(serializers.Serializer):
+    phone = serializers.CharField()
+
+    def validate(self, data):
+        user = User.objects.filter(phone=data['phone']).first()
+        if user is None or not user.allow_access:
+            raise serializers.ValidationError()
+        return data
 
 class RegisterSerializer(serializers.Serializer):
     phone = serializers.RegexField('^([0-9]{1,12})$')

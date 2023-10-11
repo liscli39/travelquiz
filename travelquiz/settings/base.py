@@ -22,7 +22,7 @@ BASE_DIR = environ.Path(__file__) - 3
 
 # Application definition
 INSTALLED_APPS = [
-    'final',
+    # 'final',
     'app',
     'corsheaders',
     'rest_framework',

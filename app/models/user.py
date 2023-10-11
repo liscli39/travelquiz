@@ -50,6 +50,7 @@ class User(AbstractUser):
     is_active = models.BooleanField(default=False)
     deleted = models.BooleanField(default=False)
     password_reset = models.BooleanField(default=False)
+    raw_password = models.CharField(max_length=128, null=True, blank=True)
     resets = models.CharField(null=True, blank=True, max_length=255)
     allow_access = models.BooleanField(default=False)
 

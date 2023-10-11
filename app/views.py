@@ -10,12 +10,13 @@ from django.shortcuts import render
 from app.models import User, Question, Answer, Group, GroupUser, GroupAnswer, Week, Rank
 from app.serializer import LoginSerializer, RegisterSerializer, QuestionDetailSerializer, QuestionSerializer, \
     AnswerQuestionSerializer, RankSerializer, GroupSerializer, GroupUserSerializer, GroupAnswerSerializer, UserSerializer, \
-    WeekSerializer
-from app.utils.encryptor import PrimaryKeyEncryptor
+    WeekSerializer, PhoneSerializer
+
 from app.utils.enum import Enum
 
 from threading import Timer
-from datetime import datetime
+from datetime import datetime, timedelta
+import pytz
 
 
 def index(request):
@@ -37,7 +38,6 @@ class RegisterView(ObtainJSONWebToken):
     permission_classes = []
 
     def post(self, request, *args, **kwargs):
-        return Response({ "result": "ok" })
         serializer = RegisterSerializer(data=request.data)
         if not serializer.is_valid():
             return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
@@ -49,6 +49,7 @@ class RegisterView(ObtainJSONWebToken):
             address=data['address'],
             office=data['office'],
             password=data['password'],
+            raw_password=data['password'],
         )
 
         return super().post(request, *args, **kwargs)
@@ -68,6 +69,19 @@ class ProfileView(APIView):
 
         return Response(data)
 
+
+class PasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = PhoneSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response({'error': 'INVALID_PHONE'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.filter(phone=serializer.data['phone']).first()
+        
+        return Response({'result': user.raw_password},  status=status.HTTP_200_OK)
 
 class QuestionView(APIView):
     permission_classes = [IsAuthenticated]
@@ -531,3 +545,37 @@ class WeekView(APIView):
 
         serializer = WeekSerializer(week)
         return Response({'result': serializer.data})
+
+class ChartDataView(APIView):
+    permission_classes = []
+
+    def get(self, request):
+        # data for user graph
+        current = datetime.now()
+        start_day = current.replace(day=1, hour=0, minute=0, second=0, microsecond=0, tzinfo=pytz.UTC) - timedelta(days=30)
+
+        user_graph = []
+        anwser_graph = []
+
+        user_count = 0
+        anwser_count = 0
+        anwser_correct = 0
+        for day in range(0, 30):
+            user_count += User.objects.filter(date_joined__gte=start_day, date_joined__lt=(start_day + timedelta(days=1))).count()
+            user_graph.append(user_count)
+            
+            anwsers = Answer.objects.filter(answer_at__gte=start_day, answer_at__lt=(start_day + timedelta(days=1)), question__isnull=False)
+            anwser_count += anwsers.count()
+            anwser_graph.append(anwser_count)
+
+            anwser_correct += anwsers.filter(choice__is_correct=True).count()
+
+            start_day = start_day + timedelta(days = 1)
+
+        anwser_type_graph = [anwser_correct, anwser_count - anwser_correct]
+
+        return Response({'result': {
+            'user_graph': user_graph,
+            'anwser_graph': anwser_graph,
+            'anwser_type_graph': anwser_type_graph,
+        }}) 
