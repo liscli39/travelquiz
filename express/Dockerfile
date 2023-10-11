@@ -1,5 +1,4 @@
 FROM node:14-alpine
-RUN apk add g++ make py3-pip
 # Create app directory
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
