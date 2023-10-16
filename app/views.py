@@ -46,8 +46,9 @@ class RegisterView(ObtainJSONWebToken):
         User.objects.create_user(
             name=data['name'],
             phone=data['phone'],
-            address=data['address'],
+            gender=data['gender'],
             office=data['office'],
+            job=data['job'],
             password=data['password'],
             raw_password=data['password'],
             prefecture=data['prefecture'],

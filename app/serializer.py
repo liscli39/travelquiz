@@ -32,7 +32,8 @@ class PhoneSerializer(serializers.Serializer):
 class RegisterSerializer(serializers.Serializer):
     phone = serializers.RegexField('^([0-9]{1,12})$')
     name = serializers.CharField()
-    address = serializers.CharField()
+    gender = serializers.IntegerField()
+    job = serializers.CharField()
     office = serializers.CharField()
     password = serializers.CharField()
     prefecture = serializers.CharField()
