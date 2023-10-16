@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from app.utils.enum import Enum
+
 import time
 
 
@@ -49,6 +51,8 @@ class User(AbstractUser):
     district = models.CharField(max_length=200, null=True, blank=True)
     wards = models.CharField(max_length=200, null=True, blank=True)
     office = models.CharField(max_length=200, null=True, blank=True)
+    job = models.CharField(max_length=200, null=True, blank=True)
+    gender = models.SmallIntegerField(choices=Enum.Genders, null=True, blank=True)
     token = models.CharField(max_length=128, blank=True)
     is_active = models.BooleanField(default=False)
     deleted = models.BooleanField(default=False)

@@ -44,20 +44,21 @@ class CustomUserAdmin(UserAdmin):
     def get_office(self, obj):
         return (obj.office[:75] + '...') if obj.office and len(obj.office) > 75 else obj.office
 
-    list_display = ('phone', 'name', 'allow_access','get_office', 'prefecture', 'district', 'wards')
+    list_display = ('phone', 'name', 'allow_access', 'gender', 'job', 'get_office', 'prefecture', 'district', 'wards')
     list_editable = ['allow_access']
     get_office.short_description = 'office'
 
     list_filter = (
         ('allow_access'),
+        ('gender'),
+        ('job', DropdownFilter),
         ('office', DropdownFilter),
         ('prefecture', DropdownFilter),
         ('district', DropdownFilter),
         ('wards', DropdownFilter),
     )
-    # ['allow_access', 'office', 'prefecture', 'district', 'wards']
     fieldsets = (
-        ('None', {'fields': ('phone', 'password', 'name', 'address', 'office', 'resets')}),
+        ('None', {'fields': ('phone', 'password', 'name', 'gender', 'job', 'office', 'prefecture', 'district', 'wards', 'resets')}),
     )
     add_fieldsets = (
         (
@@ -68,8 +69,8 @@ class CustomUserAdmin(UserAdmin):
         ),
     )
     form = UserChangeForm
-    search_fields = ('user_id', 'phone', 'name', 'address', 'office', 'prefecture', 'district', 'wards')
-    ordering = ('phone',)
+    search_fields = ('user_id', 'phone', 'name', 'gender', 'job', 'address', 'office', 'prefecture', 'district', 'wards')
+    ordering = ('phone', 'allow_access')
 
 
 class IslandInline(admin.TabularInline):

@@ -24,3 +24,10 @@ class Enum:
     )
 
     MIN_JOIN_MEMBER = 1
+
+    GENDER_MALE = 1
+    GENDER_FEMALE = 0
+    Genders = (
+        (GENDER_MALE, 'male'),
+        (GENDER_FEMALE, 'female'),
+    )
