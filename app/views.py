@@ -75,7 +75,7 @@ class ProfileView(APIView):
 
 
 class PasswordView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = []
 
     def post(self, request):
         serializer = PhoneSerializer(data=request.data)
