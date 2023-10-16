@@ -9,7 +9,10 @@ from django.db.models import Count
 from django.utils.html import format_html
 
 from .models import Question, Choice, User, Answer, Week, Island, Rank
+from django.contrib.admin.filters import AllValuesFieldListFilter
 
+class DropdownFilter(AllValuesFieldListFilter):
+    template = 'admin/dropdown_filter.html'
 
 class ChoiceInline(admin.TabularInline):
     model = Choice
@@ -35,16 +38,24 @@ class CustomUserAdmin(UserAdmin):
     #     return f'{corrects.count()}/{total.count()}'
 
     # answers.short_description = 'Corrects/Total'
-    def get_address(self, obj):
-        return (obj.address[:75] + '...') if obj.address and len(obj.address) > 75 else obj.address
+    # def get_address(self, obj):
+    #     return (obj.address[:75] + '...') if obj.address and len(obj.address) > 75 else obj.address
 
     def get_office(self, obj):
         return (obj.office[:75] + '...') if obj.office and len(obj.office) > 75 else obj.office
 
-    list_display = ('phone', 'name', 'allow_access', 'get_address', 'get_office')
+    list_display = ('phone', 'name', 'allow_access','get_office', 'prefecture', 'district', 'wards')
     list_editable = ['allow_access']
-    get_address.short_description = 'address'
     get_office.short_description = 'office'
+
+    list_filter = (
+        ('allow_access'),
+        ('office', DropdownFilter),
+        ('prefecture', DropdownFilter),
+        ('district', DropdownFilter),
+        ('wards', DropdownFilter),
+    )
+    # ['allow_access', 'office', 'prefecture', 'district', 'wards']
     fieldsets = (
         ('None', {'fields': ('phone', 'password', 'name', 'address', 'office', 'resets')}),
     )
@@ -57,7 +68,7 @@ class CustomUserAdmin(UserAdmin):
         ),
     )
     form = UserChangeForm
-    search_fields = ('user_id', 'phone', 'name', 'address', 'office')
+    search_fields = ('user_id', 'phone', 'name', 'address', 'office', 'prefecture', 'district', 'wards')
     ordering = ('phone',)
 
 

@@ -50,6 +50,9 @@ class RegisterView(ObtainJSONWebToken):
             office=data['office'],
             password=data['password'],
             raw_password=data['password'],
+            prefecture=data['prefecture'],
+            district=data['district'],
+            wards=data['wards'],
         )
 
         return super().post(request, *args, **kwargs)
