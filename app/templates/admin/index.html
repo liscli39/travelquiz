@@ -160,12 +160,15 @@
         },
       });
 
+      anwser_count = anwser_type_graph[0] + anwser_type_graph[1];
+      right = Math.round((anwser_type_graph[0] / anwser_count) * 100)
+      wrong = Math.round((anwser_type_graph[1] / anwser_count) * 100)
       const anwser_type_chart = new Chart(document.getElementById('anwser_type_chart'), {
         type: 'pie',
         data: {
-          labels: ['Đúng', 'Sai'],
+          labels: [`Đúng ${right}%`, `Sai ${wrong}%`],
           datasets: [{
-            data: [100, 1],
+            data: anwser_type_graph,
           }]
         },
         options: {

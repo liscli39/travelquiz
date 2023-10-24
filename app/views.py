@@ -556,7 +556,7 @@ class ChartDataView(APIView):
     def get(self, request):
         # data for user graph
         current = datetime.now()
-        start_day = current.replace(day=1, hour=0, minute=0, second=0, microsecond=0, tzinfo=pytz.UTC) - timedelta(days=30)
+        start_day = current.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=pytz.UTC) - timedelta(days=29)
 
         user_graph = []
         anwser_graph = []
