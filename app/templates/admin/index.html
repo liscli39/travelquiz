@@ -22,6 +22,9 @@
   <div class="chart">
     <canvas id="user_chart"></canvas>
   </div>
+  <div class="chart">
+    <canvas id="prefecture_chart"></canvas>
+  </div>
   <div class="chart anwser_chart">
     <div>
       <canvas id="anwser_chart"></canvas>
@@ -30,7 +33,6 @@
       <canvas id="anwser_type_chart"></canvas>
     </div>
   </div>
-
   <style>
     .dashboard #content {
       width: auto;
@@ -118,7 +120,13 @@
     }
     // ----------------------
     function initChart(data) {
-      const { user_graph, anwser_graph, anwser_type_graph } = data;
+      const {
+        user_graph,
+        anwser_graph,
+        anwser_type_graph,
+        prefecture_graph,
+        prefectures,
+      } = data;
 
       const user_chart = new Chart(document.getElementById('user_chart'), {
         type: 'line',
@@ -180,7 +188,28 @@
           }
         },
       });
-    } 
+    
+      const prefecture_chart = new Chart(document.getElementById('prefecture_chart'), {
+        type: 'bar',
+        data: {
+          labels: prefectures,
+          datasets: [{
+            label: 'Tổng số người dùng theo từng tỉnh',
+            backgroundColor: 'rgb(255, 99, 132)',
+            borderColor: 'rgb(255, 99, 132)',
+            data: prefecture_graph,
+          }]
+        },
+        options: {
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          },
+        },
+      });
+    }
 
     $.ajax({
       type: 'GET',

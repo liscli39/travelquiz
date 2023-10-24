@@ -578,8 +578,15 @@ class ChartDataView(APIView):
 
         anwser_type_graph = [anwser_correct, anwser_count - anwser_correct]
 
+        prefecture_graph = []
+        prefectures = User.objects.values_list('prefecture', flat=True).distinct()
+        for prefecture in prefectures:
+            prefecture_graph.append(User.objects.filter(prefecture=prefecture).count())
+
         return Response({'result': {
             'user_graph': user_graph,
             'anwser_graph': anwser_graph,
             'anwser_type_graph': anwser_type_graph,
+            'prefecture_graph': prefecture_graph,
+            'prefectures': prefectures,
         }}) 

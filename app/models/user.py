@@ -17,6 +17,7 @@ class UserManager(BaseUserManager):
 
         user = self.model(phone=phone, **extra_fields)
         user.set_password(password)
+        user.allow_access = True
         user.save(using=self._db)
         return user
 

@@ -71,18 +71,15 @@ WSGI_APPLICATION = 'travelquiz.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': '',
         'USER': '',
         'PASSWORD': '',
         'HOST': 'mysql8',
-        'PORT': '3306',
+        'PORT': '5432',
         'CONN_MAX_AGE': 0,
         'TEST': {
             'NAME': 'db_test',
-        },
-        'OPTIONS': {
-            'charset': 'utf8mb4',
         },
     }
 }

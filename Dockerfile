@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED=1
 # 作業ディレクトリ作成
 WORKDIR /app
 
-RUN apt-get update && apt-get -y install gdal-bin libgdal-dev
+RUN apt-get update && apt-get -y install gdal-bin libgdal-dev python-psycopg2
 
 # PyPIパッケージのインストール
 COPY requirements.txt /app/
