@@ -579,7 +579,7 @@ class ChartDataView(APIView):
         anwser_type_graph = [anwser_correct, anwser_count - anwser_correct]
 
         prefecture_graph = []
-        prefectures = User.objects.values_list('prefecture', flat=True).distinct()
+        prefectures = User.objects.filter(date_joined__gte='2023-10-25').values_list('prefecture', flat=True).distinct()
         for prefecture in prefectures:
             prefecture_graph.append(User.objects.filter(prefecture=prefecture).count())
 
