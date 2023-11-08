@@ -177,4 +177,4 @@ class WeekSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Week
-        fields = ['name', 'is_active', 'islands']
+        fields = ['name', 'is_active', 'limit_time', 'limit_question', 'islands']
