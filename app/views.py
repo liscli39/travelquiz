@@ -171,6 +171,9 @@ class QuestionDetailView(APIView):
         if 'choice_id' in request.data:
             data['choice'] = request.data['choice_id']
         
+        if 'content' in request.data:
+            data['content'] = request.data['content']
+
         data['time'] = request.data['time'] if 'time' in request.data else 9999
 
         serializer = AnswerQuestionSerializer(data=data)

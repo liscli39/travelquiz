@@ -22,10 +22,10 @@ class QuestionAdmin(admin.ModelAdmin):
     def answer_count(self, obj):
         return Answer.objects.filter(question=obj).count()
 
-    list_display = ('question_text', 'answer_count', 'week')
-    list_editable = ('week',)
+    list_display = ('question_text', 'answer_count', 'week', 'type')
+    list_editable = ('week', 'type')
     fieldsets = [
-        (None, {'fields': ['question_text', 'week', 'wiki_url', 'wiki_title']}),
+        (None, {'fields': ['question_text', 'week', 'type', 'wiki_url', 'wiki_title']}),
     ]
     inlines = [ChoiceInline]
 
