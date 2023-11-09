@@ -24,6 +24,7 @@ class QuestionAdmin(admin.ModelAdmin):
 
     list_display = ('question_text', 'answer_count', 'week', 'type')
     list_editable = ('week', 'type')
+    list_filter = ('week', 'type')
     fieldsets = [
         (None, {'fields': ['question_text', 'week', 'type', 'wiki_url', 'wiki_title']}),
     ]
@@ -93,7 +94,7 @@ class AnswerAdmin(admin.ModelAdmin):
 
     raw_id_fields=['user']
     search_fields = ('user__user_id', 'user__phone')
-    list_display = ('user', 'question', 'is_correct' ,'time', 'choice')
+    list_display = ('user', 'question', 'is_correct' ,'time', 'choice', 'content')
     ordering = ('-answer_id',)
 
 class WeekFilter(admin.SimpleListFilter):

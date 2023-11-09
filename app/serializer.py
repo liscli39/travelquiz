@@ -78,6 +78,7 @@ class QuestionDetailSerializer(serializers.ModelSerializer):
         fields = [
             'question_id',
             'question_text',
+            'type',
             'choices',
             'wiki_url',
             'wiki_title',
