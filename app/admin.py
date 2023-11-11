@@ -204,7 +204,7 @@ class RankAdmin(admin.ModelAdmin):
 
         Rank.objects.filter(week_id=week_id).delete()
         Rank.objects.bulk_create([
-            Rank(week=week, user_id=user.user_id, corrects=user.corrects, time=user.time, predict=user.predict)
+            Rank(week=week, user_id=user.user_id, corrects=user.corrects, time=user.time, predict=user.predict if user.predict else 0)
             for user in users
         ])
 
