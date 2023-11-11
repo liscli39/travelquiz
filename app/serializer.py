@@ -39,6 +39,8 @@ class RegisterSerializer(serializers.Serializer):
     prefecture = serializers.CharField()
     district = serializers.CharField()
     wards = serializers.CharField()
+    year = serializers.CharField()
+    cccd = serializers.CharField()
 
     def validate(self, data):
         user = User.objects.filter(phone=data['phone']).first()

@@ -10,6 +10,7 @@ from django.utils.html import format_html
 
 from .models import Question, Choice, User, Answer, Week, Island, Rank
 from django.contrib.admin.filters import AllValuesFieldListFilter
+from app.utils.enum import Enum
 
 class DropdownFilter(AllValuesFieldListFilter):
     template = 'admin/dropdown_filter.html'
@@ -45,7 +46,7 @@ class CustomUserAdmin(UserAdmin):
     def get_office(self, obj):
         return (obj.office[:75] + '...') if obj.office and len(obj.office) > 75 else obj.office
 
-    list_display = ('phone', 'name', 'allow_access', 'gender', 'job', 'get_office', 'prefecture', 'district', 'wards')
+    list_display = ('phone', 'cccd', 'name', 'allow_access', 'gender', 'year', 'job', 'get_office', 'prefecture', 'district', 'wards')
     list_editable = ['allow_access']
     get_office.short_description = 'office'
 
@@ -59,7 +60,7 @@ class CustomUserAdmin(UserAdmin):
         ('wards', DropdownFilter),
     )
     fieldsets = (
-        ('None', {'fields': ('phone', 'password', 'name', 'gender', 'job', 'office', 'prefecture', 'district', 'wards', 'resets')}),
+        ('None', {'fields': ('phone', 'password', 'name', 'year', 'cccd', 'gender', 'job', 'office', 'prefecture', 'district', 'wards', 'resets')}),
     )
     add_fieldsets = (
         (
@@ -143,7 +144,9 @@ class RankAdmin(admin.ModelAdmin):
         week_id = week.week_id if week is not None else None
 
         completed = Answer.objects.values('user_id').annotate(question_count=Count('question_id'))\
-            .filter(question_count=30, question__week_id=week_id).values_list('user_id', flat=True)
+            .filter(question_count=19, question__type=Enum.QUESTION_CHOICE, question__week_id=week_id).values_list('user_id', flat=True)
+
+        completed_count = completed.count()
 
         corrects = '''
             SELECT COUNT(V0.`question_id`) AS `count`
@@ -167,31 +170,43 @@ class RankAdmin(admin.ModelAdmin):
                 (
                     SELECT SUM(U0.`time`)
                     FROM `app_answer` U0
-                    INNER JOIN `app_choice` U1 ON (U0.`choice_id` = U1.`choice_id`)
                     INNER JOIN `app_question` U2 ON (U0.`question_id` = U2.`question_id`)
                     WHERE 
-                        U1.`is_correct` AND 
                         U2.`week_id` = {week_id} AND
                         U0.`question_id` IS NOT NULL AND 
                         U0.`user_id` = `app_user`.`user_id`
                     GROUP BY U0.`user_id`
                     ORDER BY NULL
                     LIMIT 1
-                ) AS `time`
+                ) AS `time`,
+                ABS(
+                    {completed_count} - (
+                        SELECT `content`
+                        FROM `app_answer` U0
+                        INNER JOIN `app_question` U2 ON (U0.`question_id` = U2.`question_id`)
+                        WHERE 
+                            U2.`week_id` = {week_id} AND
+                            U2.`type` = 2 AND
+                            U0.`question_id` IS NOT NULL AND 
+                            U0.`user_id` = `app_user`.`user_id`
+                        ORDER BY NULL
+                        LIMIT 1
+                    )
+                ) AS `predict`
             FROM `app_user`
             WHERE 
                 NOT `app_user`.`is_superuser` 
                 AND `app_user`.`user_id` IN ({completed}) 
                 AND ({corrects}) > 0
-            ORDER BY `corrects` DESC, `time` ASC
+            ORDER BY `corrects` DESC, `predict` ASC, `time` ASC
             LIMIT 500;
-        '''.format(completed=completed.query, corrects=corrects, week_id=week_id))
+        '''.format(completed=completed.query, corrects=corrects, week_id=week_id, completed_count=completed_count))
 
         Rank.objects.filter(week_id=week_id).delete()
         Rank.objects.bulk_create([
-            Rank(week=week, user_id=user.user_id, corrects=user.corrects, time=user.time)
+            Rank(week=week, user_id=user.user_id, corrects=user.corrects, time=user.time, predict=user.predict)
             for user in users
-        ])            
+        ])
 
         week.rank_updated_at = datetime.now()
         week.save()
@@ -226,10 +241,10 @@ class RankAdmin(admin.ModelAdmin):
         return obj.user.phone
 
     change_list_template = 'rank_changelist.html'
-    list_display = ('selected', 'name', 'phone','corrects', 'time')
+    list_display = ('selected', 'name', 'phone','corrects', 'predict', 'time')
     list_editable = ('selected',)
     list_display_links = None
-    ordering = ('-selected', '-corrects', 'time')
+    ordering = ('-selected', '-corrects', 'predict', 'time')
     sortable_by = ()
     list_filter = ('selected', WeekFilter)
 

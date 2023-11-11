@@ -10,3 +10,4 @@ class Rank(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     corrects = models.IntegerField(default=0)
     time = models.IntegerField(default=0)
+    predict = models.IntegerField(default=0)

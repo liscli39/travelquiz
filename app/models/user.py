@@ -54,6 +54,8 @@ class User(AbstractUser):
     office = models.CharField(max_length=200, null=True, blank=True)
     job = models.CharField(max_length=200, null=True, blank=True)
     gender = models.SmallIntegerField(choices=Enum.Genders, null=True, blank=True)
+    year = models.CharField(max_length=5, null=True, blank=True)
+    cccd = models.CharField(max_length=20, null=True, blank=True)
     token = models.CharField(max_length=128, blank=True)
     is_active = models.BooleanField(default=False)
     deleted = models.BooleanField(default=False)

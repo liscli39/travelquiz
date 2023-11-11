@@ -54,6 +54,8 @@ class RegisterView(ObtainJSONWebToken):
             prefecture=data['prefecture'],
             district=data['district'],
             wards=data['wards'],
+            year=data['year'],
+            cccd=data['cccd'],
         )
 
         return super().post(request, *args, **kwargs)
@@ -125,7 +127,7 @@ class QuestionView(APIView):
             times = user.resets.split(';') if user.resets is not None else []
             times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
 
-            if len(times) > 2:
+            if len(times) >= 2:
                 return Response({'error': 'RESET_LIMIT'}, status=status.HTTP_400_BAD_REQUEST)
 
             answers.delete()
