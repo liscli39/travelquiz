@@ -10,3 +10,5 @@ class Week(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     rank_updated_at = models.DateTimeField(null=True)
     show_rank = models.BooleanField(null=True, blank=True, unique=True)
+    limit_time = models.IntegerField(default=120000)
+    limit_question = models.IntegerField(default=20)

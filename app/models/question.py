@@ -1,5 +1,6 @@
 from django.db import models
 from app.models.week import Week
+from app.utils.enum import Enum
 
 class Question(models.Model):
     def __str__(self):
@@ -10,3 +11,4 @@ class Question(models.Model):
     wiki_url = models.URLField(null=True, blank=True)
     wiki_title = models.CharField(max_length=255, null=True, blank=True)
     week = models.ForeignKey(Week, on_delete=models.CASCADE, null=True)
+    type = models.SmallIntegerField(choices=Enum.QuestionTypes, default=Enum.QUESTION_CHOICE)

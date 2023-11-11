@@ -10,13 +10,13 @@ from django.shortcuts import render
 from app.models import User, Question, Answer, Group, GroupUser, GroupAnswer, Week, Rank
 from app.serializer import LoginSerializer, RegisterSerializer, QuestionDetailSerializer, QuestionSerializer, \
     AnswerQuestionSerializer, RankSerializer, GroupSerializer, GroupUserSerializer, GroupAnswerSerializer, UserSerializer, \
-    WeekSerializer
-from app.utils.encryptor import PrimaryKeyEncryptor
+    WeekSerializer, PhoneSerializer
+
 from app.utils.enum import Enum
-from app.utils.common import send_to_channel_room
 
 from threading import Timer
-from datetime import datetime
+from datetime import datetime, timedelta
+import pytz
 
 
 def index(request):
@@ -38,7 +38,6 @@ class RegisterView(ObtainJSONWebToken):
     permission_classes = []
 
     def post(self, request, *args, **kwargs):
-        return Response({ "result": "ok" })
         serializer = RegisterSerializer(data=request.data)
         if not serializer.is_valid():
             return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
@@ -47,9 +46,14 @@ class RegisterView(ObtainJSONWebToken):
         User.objects.create_user(
             name=data['name'],
             phone=data['phone'],
-            address=data['address'],
+            gender=data['gender'],
             office=data['office'],
+            job=data['job'],
             password=data['password'],
+            raw_password=data['password'],
+            prefecture=data['prefecture'],
+            district=data['district'],
+            wards=data['wards'],
         )
 
         return super().post(request, *args, **kwargs)
@@ -69,6 +73,19 @@ class ProfileView(APIView):
 
         return Response(data)
 
+
+class PasswordView(APIView):
+    permission_classes = []
+
+    def post(self, request):
+        serializer = PhoneSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response({'error': 'INVALID_PHONE'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.filter(phone=serializer.data['phone']).first()
+        
+        return Response({'result': user.raw_password},  status=status.HTTP_200_OK)
 
 class QuestionView(APIView):
     permission_classes = [IsAuthenticated]
@@ -154,6 +171,9 @@ class QuestionDetailView(APIView):
         if 'choice_id' in request.data:
             data['choice'] = request.data['choice_id']
         
+        if 'content' in request.data:
+            data['content'] = request.data['content']
+
         data['time'] = request.data['time'] if 'time' in request.data else 9999
 
         serializer = AnswerQuestionSerializer(data=data)
@@ -258,7 +278,6 @@ class GroupView(APIView):
             serializer = GroupSerializer(group)
             data = serializer.data
 
-            send_to_channel_room(data['group_id'], 'cancel_room', 0)
             GroupUser.objects.filter(group=group).delete()
             group.delete()
 
@@ -287,7 +306,6 @@ class GroupDetailView(APIView):
         serializer = GroupSerializer(group)
         data = serializer.data
 
-        send_to_channel_room(data['group_id'], 'cancel_room', 0)
         GroupUser.objects.filter(group=group).delete()
         group.delete()
 
@@ -314,7 +332,6 @@ class GroupDetailView(APIView):
         GroupUser.objects.filter(group=group, status=Enum.USER_GROUP_STATUS_READY) \
             .update(status=Enum.USER_GROUP_STATUS_INGAME)
 
-        send_to_channel_room(group_id, 'game_start', not_ready_list)
         return Response({"result": "ok"})
 
 
@@ -335,7 +352,6 @@ class GroupJoinView(APIView):
             return Response({'error': 'INVALID_PARAMS'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer.save()  
-        send_to_channel_room(group_id, 'join_room', user.user_id)
 
         return Response({"result": "ok"})
 
@@ -355,7 +371,6 @@ class GroupReadyView(APIView):
 
         group_user.status = Enum.USER_GROUP_STATUS_READY
         group_user.save()
-        send_to_channel_room(group_id, 'ready_play', user.user_id)
 
         return Response({"result": "ok"})
 
@@ -443,7 +458,6 @@ class GroupQuestionDetailView(APIView):
         if completed_count >= group_user_count:
             group.status = Enum.GROUP_STATUS_FINISHED
             group.save()
-            send_to_channel_room(group_id, 'gameover', 0)
 
         return Response({'result': 'ok'},  status=status.HTTP_200_OK)
 
@@ -538,3 +552,44 @@ class WeekView(APIView):
 
         serializer = WeekSerializer(week)
         return Response({'result': serializer.data})
+
+class ChartDataView(APIView):
+    permission_classes = []
+
+    def get(self, request):
+        # data for user graph
+        current = datetime.now()
+        start_day = current.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=pytz.UTC) - timedelta(days=29)
+
+        user_graph = []
+        anwser_graph = []
+
+        user_count = 0
+        anwser_count = 0
+        anwser_correct = 0
+        for day in range(0, 30):
+            user_count += User.objects.filter(date_joined__gte=start_day, date_joined__lt=(start_day + timedelta(days=1))).count()
+            user_graph.append(user_count)
+            
+            anwsers = Answer.objects.filter(answer_at__gte=start_day, answer_at__lt=(start_day + timedelta(days=1)), question__isnull=False)
+            anwser_count += anwsers.count()
+            anwser_graph.append(anwser_count)
+
+            anwser_correct += anwsers.filter(choice__is_correct=True).count()
+
+            start_day = start_day + timedelta(days = 1)
+
+        anwser_type_graph = [anwser_correct, anwser_count - anwser_correct]
+
+        prefecture_graph = []
+        prefectures = User.objects.filter(date_joined__gte='2023-10-25').values_list('prefecture', flat=True).distinct()
+        for prefecture in prefectures:
+            prefecture_graph.append(User.objects.filter(prefecture=prefecture).count())
+
+        return Response({'result': {
+            'user_graph': user_graph,
+            'anwser_graph': anwser_graph,
+            'anwser_type_graph': anwser_type_graph,
+            'prefecture_graph': prefecture_graph,
+            'prefectures': prefectures,
+        }}) 

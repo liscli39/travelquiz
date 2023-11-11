@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from app.utils.enum import Enum
+
 import time
 
 
@@ -15,6 +17,7 @@ class UserManager(BaseUserManager):
 
         user = self.model(phone=phone, **extra_fields)
         user.set_password(password)
+        user.allow_access = True
         user.save(using=self._db)
         return user
 
@@ -45,11 +48,17 @@ class User(AbstractUser):
     phone = models.CharField(_('phone'), max_length=12, unique=True)
     name = models.CharField(max_length=200, null=True, blank=True)
     address = models.CharField(max_length=200, null=True, blank=True)
+    prefecture = models.CharField(max_length=200, null=True, blank=True)
+    district = models.CharField(max_length=200, null=True, blank=True)
+    wards = models.CharField(max_length=200, null=True, blank=True)
     office = models.CharField(max_length=200, null=True, blank=True)
+    job = models.CharField(max_length=200, null=True, blank=True)
+    gender = models.SmallIntegerField(choices=Enum.Genders, null=True, blank=True)
     token = models.CharField(max_length=128, blank=True)
     is_active = models.BooleanField(default=False)
     deleted = models.BooleanField(default=False)
     password_reset = models.BooleanField(default=False)
+    raw_password = models.CharField(max_length=128, null=True, blank=True)
     resets = models.CharField(null=True, blank=True, max_length=255)
     allow_access = models.BooleanField(default=False)
 

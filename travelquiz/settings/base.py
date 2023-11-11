@@ -9,9 +9,10 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-
+from pathlib import Path
 from datetime import timedelta
 import environ
+import os 
 
 # 環境変数読み込み
 env = environ.Env(DEBUG=(bool, False))
@@ -21,6 +22,7 @@ BASE_DIR = environ.Path(__file__) - 3
 
 # Application definition
 INSTALLED_APPS = [
+    # 'final',
     'app',
     'corsheaders',
     'rest_framework',
@@ -79,9 +81,6 @@ DATABASES = {
         'TEST': {
             'NAME': 'db_test',
         },
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-        },
     }
 }
 
@@ -137,6 +136,9 @@ REST_FRAMEWORK = {
 
 STATIC_URL = '/static/'
 
+MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'Media')
+MEDIA_URL= '/media/'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
@@ -163,14 +165,14 @@ CHANNEL_LAYERS = {
 }
 
 
-LOGGING = {
-    'version': 1,
-    'loggers': {
-        'requests': {
-            'level': 'WARNING',
-        },
-    }
-}
+# LOGGING = {
+#     'version': 1,
+#     'loggers': {
+#         'requests': {
+#             'level': 'WARNING',
+#         },
+#     }
+# }
 
 TIME_ZONE = 'Asia/Ho_Chi_Minh'
 

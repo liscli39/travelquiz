@@ -20,13 +20,25 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError()
         return data
 
+class PhoneSerializer(serializers.Serializer):
+    phone = serializers.CharField()
+
+    def validate(self, data):
+        user = User.objects.filter(phone=data['phone']).first()
+        if user is None or not user.allow_access:
+            raise serializers.ValidationError()
+        return data
 
 class RegisterSerializer(serializers.Serializer):
     phone = serializers.RegexField('^([0-9]{1,12})$')
     name = serializers.CharField()
-    address = serializers.CharField()
+    gender = serializers.IntegerField()
+    job = serializers.CharField()
     office = serializers.CharField()
     password = serializers.CharField()
+    prefecture = serializers.CharField()
+    district = serializers.CharField()
+    wards = serializers.CharField()
 
     def validate(self, data):
         user = User.objects.filter(phone=data['phone']).first()
@@ -66,6 +78,7 @@ class QuestionDetailSerializer(serializers.ModelSerializer):
         fields = [
             'question_id',
             'question_text',
+            'type',
             'choices',
             'wiki_url',
             'wiki_title',
@@ -165,4 +178,4 @@ class WeekSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Week
-        fields = ['name', 'is_active', 'islands']
+        fields = ['name', 'is_active', 'limit_time', 'limit_question', 'islands']

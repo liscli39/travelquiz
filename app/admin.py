@@ -9,7 +9,10 @@ from django.db.models import Count
 from django.utils.html import format_html
 
 from .models import Question, Choice, User, Answer, Week, Island, Rank
+from django.contrib.admin.filters import AllValuesFieldListFilter
 
+class DropdownFilter(AllValuesFieldListFilter):
+    template = 'admin/dropdown_filter.html'
 
 class ChoiceInline(admin.TabularInline):
     model = Choice
@@ -19,10 +22,11 @@ class QuestionAdmin(admin.ModelAdmin):
     def answer_count(self, obj):
         return Answer.objects.filter(question=obj).count()
 
-    list_display = ('question_text', 'answer_count', 'week')
-    list_editable = ('week',)
+    list_display = ('question_text', 'answer_count', 'week', 'type')
+    list_editable = ('week', 'type')
+    list_filter = ('week', 'type')
     fieldsets = [
-        (None, {'fields': ['question_text', 'week', 'wiki_url', 'wiki_title']}),
+        (None, {'fields': ['question_text', 'week', 'type', 'wiki_url', 'wiki_title']}),
     ]
     inlines = [ChoiceInline]
 
@@ -35,18 +39,27 @@ class CustomUserAdmin(UserAdmin):
     #     return f'{corrects.count()}/{total.count()}'
 
     # answers.short_description = 'Corrects/Total'
-    def get_address(self, obj):
-        return (obj.address[:75] + '...') if obj.address and len(obj.address) > 75 else obj.address
+    # def get_address(self, obj):
+    #     return (obj.address[:75] + '...') if obj.address and len(obj.address) > 75 else obj.address
 
     def get_office(self, obj):
         return (obj.office[:75] + '...') if obj.office and len(obj.office) > 75 else obj.office
 
-    list_display = ('phone', 'name', 'allow_access', 'get_address', 'get_office')
+    list_display = ('phone', 'name', 'allow_access', 'gender', 'job', 'get_office', 'prefecture', 'district', 'wards')
     list_editable = ['allow_access']
-    get_address.short_description = 'address'
     get_office.short_description = 'office'
+
+    list_filter = (
+        ('allow_access'),
+        ('gender'),
+        ('job', DropdownFilter),
+        ('office', DropdownFilter),
+        ('prefecture', DropdownFilter),
+        ('district', DropdownFilter),
+        ('wards', DropdownFilter),
+    )
     fieldsets = (
-        ('None', {'fields': ('phone', 'password', 'name', 'address', 'office', 'resets')}),
+        ('None', {'fields': ('phone', 'password', 'name', 'gender', 'job', 'office', 'prefecture', 'district', 'wards', 'resets')}),
     )
     add_fieldsets = (
         (
@@ -57,8 +70,8 @@ class CustomUserAdmin(UserAdmin):
         ),
     )
     form = UserChangeForm
-    search_fields = ('user_id', 'phone', 'name', 'address', 'office')
-    ordering = ('phone',)
+    search_fields = ('user_id', 'phone', 'name', 'gender', 'job', 'address', 'office', 'prefecture', 'district', 'wards')
+    ordering = ('phone', 'allow_access')
 
 
 class IslandInline(admin.TabularInline):
@@ -81,7 +94,7 @@ class AnswerAdmin(admin.ModelAdmin):
 
     raw_id_fields=['user']
     search_fields = ('user__user_id', 'user__phone')
-    list_display = ('user', 'question', 'is_correct' ,'time', 'choice')
+    list_display = ('user', 'question', 'is_correct' ,'time', 'choice', 'content')
     ordering = ('-answer_id',)
 
 class WeekFilter(admin.SimpleListFilter):

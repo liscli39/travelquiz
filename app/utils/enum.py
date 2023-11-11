@@ -24,3 +24,19 @@ class Enum:
     )
 
     MIN_JOIN_MEMBER = 1
+
+    GENDER_MALE = 1
+    GENDER_FEMALE = 0
+    Genders = (
+        (GENDER_MALE, 'nam'),
+        (GENDER_FEMALE, 'nữ'),
+    )
+
+    QUESTION_CHOICE = 0
+    QUESTION_TEXT = 1
+    QUESTION_PREDICT = 2
+    QuestionTypes = (
+        (QUESTION_CHOICE, 'lựa chọn'),
+        (QUESTION_TEXT, 'tự luận'),
+        (QUESTION_PREDICT, 'dự đoán'),
+    )
