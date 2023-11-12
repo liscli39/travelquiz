@@ -207,9 +207,11 @@ class AnswerView(APIView):
         times = user.resets.split(';') if user.resets is not None else []
         times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
 
+        predict_answer = Answer.objects.filter(user=user, question__week__is_active=True, question__type=Enum.QUESTION_PREDICT).first()
         result = {
             "corrects": corrects.count(),
             "total": total.count(),
+            "predict": predict_answer.predict,
             "reset_time": len(times),
             "total_time": total_time,
         }
