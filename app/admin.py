@@ -193,19 +193,31 @@ class RankAdmin(admin.ModelAdmin):
                         ORDER BY NULL
                         LIMIT 1
                     )
+                ) AS `delta`,
+                (
+                    SELECT `content`
+                    FROM `app_answer` U0
+                    INNER JOIN `app_question` U2 ON (U0.`question_id` = U2.`question_id`)
+                    WHERE 
+                        U2.`week_id` = {week_id} AND
+                        U2.`type` = 2 AND
+                        U0.`question_id` IS NOT NULL AND 
+                        U0.`user_id` = `app_user`.`user_id`
+                    ORDER BY NULL
+                    LIMIT 1
                 ) AS `predict`
             FROM `app_user`
             WHERE 
                 NOT `app_user`.`is_superuser` 
                 AND `app_user`.`user_id` IN ({completed}) 
                 AND ({corrects}) > 0
-            ORDER BY `corrects` DESC, `predict` ASC, `time` ASC
+            ORDER BY `corrects` DESC, `delta` ASC, `time` ASC
             LIMIT 500;
         '''.format(completed=completed.query, corrects=corrects, week_id=week_id, completed_count=completed_count))
 
         Rank.objects.filter(week_id=week_id).delete()
         Rank.objects.bulk_create([
-            Rank(week=week, user_id=user.user_id, corrects=user.corrects, time=user.time, predict=user.predict if user.predict else 0)
+            Rank(week=week, user_id=user.user_id, corrects=user.corrects, time=user.time, predict=user.predict if user.predict else 0, delta=user.delta if user.delta else 0)
             for user in users
         ])
 
@@ -227,11 +239,16 @@ class RankAdmin(admin.ModelAdmin):
         if week is None:
             week = Week.objects.filter(is_active=True).first()
     
+        question_count = Question.objects.filter(week_id=week_id, type=Enum.QUESTION_CHOICE).count()
+        completed_count = Answer.objects.values('user_id').annotate(question_count=Count('question_id'))\
+            .filter(question_count=question_count, question__type=Enum.QUESTION_CHOICE, question__week_id=week_id).values_list('user_id', flat=True).count()
+
         title = week.name if week is not None else None
         updated_at = week.rank_updated_at if week is not None else None
         action = 'reload/' + ('?week={}'.format(week.week_id) if week is not None else '')
 
-        extra_context = {'title': title, 'updated_at': updated_at, 'action': action}
+        extra_context = {'title': title, 'updated_at': updated_at, 'action': action, 'completed_count': completed_count}
+        self.completed_count = completed_count
         return super(RankAdmin, self).changelist_view(request, extra_context=extra_context)
 
     def name(self, obj):
@@ -241,10 +258,27 @@ class RankAdmin(admin.ModelAdmin):
     def phone(self, obj):
         return obj.user.phone
 
+    def m_corrects(self, obj):
+        return obj.corrects
+
+    def m_time(self, obj):
+        return '{} s'.format(obj.time / 100)
+
+    def m_predict(self, obj):
+        completed_count = self.completed_count if self.completed_count else 0
+        return '{} /{}'.format(obj.predict, completed_count)
+
+    m_predict.short_description = "Dự đoán"
+    name.short_description = "Tên"
+    phone.short_description = "SĐT"
+    m_corrects.short_description = "Số câu đúng"
+    m_time.short_description = "Thời gian"
+
     change_list_template = 'rank_changelist.html'
-    list_display = ('selected', 'name', 'phone','corrects', 'predict', 'time')
-    list_editable = ('selected',)
+    list_display = ('name', 'phone', 'm_corrects', 'm_predict', 'm_time')
+    # list_editable = ('selected',)
     list_display_links = None
+
     ordering = ('-selected', '-corrects', 'predict', 'time')
     sortable_by = ()
     list_filter = ('selected', WeekFilter)

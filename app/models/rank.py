@@ -11,3 +11,4 @@ class Rank(models.Model):
     corrects = models.IntegerField(default=0)
     time = models.IntegerField(default=0)
     predict = models.IntegerField(default=0)
+    delta = models.IntegerField(default=0)
