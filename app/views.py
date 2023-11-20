@@ -123,6 +123,7 @@ class QuestionView(APIView):
         if answers.exists():
             current = datetime.now()
             startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
+            startday = startday - timedelta(days=startday.weekday())
 
             times = user.resets.split(';') if user.resets is not None else []
             times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
@@ -203,6 +204,7 @@ class AnswerView(APIView):
 
         current = datetime.now()
         startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
+        startday = startday - timedelta(days=startday.weekday())
 
         times = user.resets.split(';') if user.resets is not None else []
         times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
@@ -222,6 +224,7 @@ class AnswerView(APIView):
         user = request.user
         current = datetime.now()
         startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
+        startday = startday - timedelta(days=startday.weekday())
 
         times = user.resets.split(';') if user.resets is not None else []
         times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
