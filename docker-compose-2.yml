@@ -1,0 +1,19 @@
+version: "3"
+services:
+  api:
+    container_name: travelquiz_api_2
+    build:
+     context: .
+     dockerfile: Dockerfile
+    command: >
+      bash -c "pip install -r requirements.txt &&
+      python3 manage.py makemigrations &&
+      python3 manage.py migrate &&
+      python3 manage.py runserver 0.0.0.0:8000"
+    environment:
+      - DJANGO_READ_ENV_FILE=True
+    volumes:
+      - ".:/app"
+    ports:
+      - "9002:8000"
+    restart: always

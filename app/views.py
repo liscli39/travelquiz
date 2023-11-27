@@ -120,22 +120,22 @@ class QuestionView(APIView):
         #     return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
 
         answers = Answer.objects.filter(Q(question__week__is_active=True) | Q(question=None), user=user)
+        current = datetime.now()
+        startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
+        startday = startday - timedelta(days=startday.weekday())
+
+        times = user.resets.split(';') if user.resets is not None else []
+        times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
+
+        if len(times) > 1:
+            return Response({'error': 'RESET_LIMIT'}, status=status.HTTP_400_BAD_REQUEST)
+
         if answers.exists():
-            current = datetime.now()
-            startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
-            startday = startday - timedelta(days=startday.weekday())
-
-            times = user.resets.split(';') if user.resets is not None else []
-            times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
-
-            if len(times) >= 2:
-                return Response({'error': 'RESET_LIMIT'}, status=status.HTTP_400_BAD_REQUEST)
-
             answers.delete()
 
-            times.append(str(int(current.timestamp())))
-            user.resets = ';'.join(times)
-            user.save()
+        times.append(str(int(current.timestamp())))
+        user.resets = ';'.join(times)
+        user.save()
 
         serializer.save()
 
@@ -213,8 +213,8 @@ class AnswerView(APIView):
         result = {
             "corrects": corrects.count(),
             "total": total.count(),
-            "predict": predict_answer.predict,
-            "reset_time": len(times),
+            "predict": predict_answer.content if predict_answer is not None else 0,
+            "reset_time": len(times) - 1,
             "total_time": total_time,
         }
 
@@ -229,7 +229,7 @@ class AnswerView(APIView):
         times = user.resets.split(';') if user.resets is not None else []
         times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
 
-        if len(times) > 2:
+        if len(times) > 1:
             return Response({'error': 'RESET_LIMIT'}, status=status.HTTP_400_BAD_REQUEST)
 
         Answer.objects.filter(Q(question__week__is_active=True) | Q(question=None), user=user).delete()
