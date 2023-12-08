@@ -25,8 +25,8 @@ class Enum:
 
     MIN_JOIN_MEMBER = 1
 
-    GENDER_MALE = 1
-    GENDER_FEMALE = 0
+    GENDER_FEMALE = 1
+    GENDER_MALE = 0
     Genders = (
         (GENDER_MALE, 'nam'),
         (GENDER_FEMALE, 'nữ'),

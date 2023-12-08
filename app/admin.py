@@ -145,7 +145,7 @@ class RankAdmin(admin.ModelAdmin):
         question_count = Question.objects.filter(week_id=week_id, type=Enum.QUESTION_CHOICE).count()
 
         completed = Answer.objects.values('user_id').annotate(question_count=Count('question_id'))\
-            .filter(question_count=question_count, question__type=Enum.QUESTION_CHOICE, question__week_id=week_id).values_list('user_id', flat=True)
+            .filter(question_count=19, question__type=Enum.QUESTION_CHOICE, question__week_id=week_id).values_list('user_id', flat=True)
 
         completed_count = completed.count()
 
@@ -182,7 +182,7 @@ class RankAdmin(admin.ModelAdmin):
                 ) AS `time`,
                 ABS(
                     {completed_count} - (
-                        SELECT `content`
+                        SELECT SUBSTRING(`content`, 1, 9)
                         FROM `app_answer` U0
                         INNER JOIN `app_question` U2 ON (U0.`question_id` = U2.`question_id`)
                         WHERE 
@@ -195,7 +195,7 @@ class RankAdmin(admin.ModelAdmin):
                     )
                 ) AS `delta`,
                 (
-                    SELECT `content`
+                    SELECT SUBSTRING(`content`, 1, 9)
                     FROM `app_answer` U0
                     INNER JOIN `app_question` U2 ON (U0.`question_id` = U2.`question_id`)
                     WHERE 
