@@ -162,9 +162,6 @@ class QuestionDetailView(APIView):
         user = request.user
         question = Question.objects.filter(question_id=question_id).first()
 
-        if Answer.objects.filter(user=user, question_id=question_id).exists():
-            return Response({'error': 'QUESTION_ALREADY_SUBMIT'}, status=status.HTTP_400_BAD_REQUEST)
-
         times = user.resets.split(';') if user.resets is not None else []
         data = {
             'user': user.user_id,
