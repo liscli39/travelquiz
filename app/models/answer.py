@@ -5,6 +5,11 @@ from app.models.question import Question
 
 
 class Answer(models.Model):
+    class Meta:
+        indexes = [
+            models.Index(fields=['answer_at']),
+        ]
+
     answer_id = models.BigAutoField(primary_key=True)
     choice = models.ForeignKey(Choice, on_delete=models.CASCADE, null=True, blank=True)
     content = models.TextField(null=True, blank=True)

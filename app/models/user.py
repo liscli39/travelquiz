@@ -76,3 +76,8 @@ class User(AbstractUser):
                 and not self.deleted
                 and not self.password_reset
                 and self.is_active)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['prefecture']),
+        ]
