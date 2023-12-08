@@ -11,4 +11,5 @@ class Answer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     time = models.IntegerField(null=True, blank=True)
     question = models.ForeignKey(Question, on_delete=models.CASCADE, null=True, blank=True)
+    turn = models.CharField(null=True, blank=True, max_length=255)
     answer_at = models.DateTimeField(auto_now_add=True, null=True)

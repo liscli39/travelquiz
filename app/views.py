@@ -103,8 +103,10 @@ class QuestionView(APIView):
 
     def post(self, request):
         user = request.user
+        turn = str(int(current.timestamp()))
         data = [{
             'user': user.user_id,
+            'turn': turn,
             **choice,
         } for choice in request.data]
 
@@ -119,7 +121,6 @@ class QuestionView(APIView):
         # if time_sum < 1500:
         #     return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
 
-        answers = Answer.objects.filter(Q(question__week__is_active=True) | Q(question=None), user=user)
         current = datetime.now()
         startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
         startday = startday - timedelta(days=startday.weekday())
@@ -130,10 +131,7 @@ class QuestionView(APIView):
         if len(times) > 1:
             return Response({'error': 'RESET_LIMIT'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if answers.exists():
-            answers.delete()
-
-        times.append(str(int(current.timestamp())))
+        times.append(turn)
         user.resets = ';'.join(times)
         user.save()
 
@@ -166,9 +164,11 @@ class QuestionDetailView(APIView):
         if Answer.objects.filter(user=user, question_id=question_id).exists():
             return Response({'error': 'QUESTION_ALREADY_SUBMIT'}, status=status.HTTP_400_BAD_REQUEST)
 
+        times = user.resets.split(';') if user.resets is not None else []
         data = {
             'user': user.user_id,
             'question': question_id,
+            'turn': times[-1]
         }
 
         if 'choice_id' in request.data:
@@ -193,7 +193,9 @@ class AnswerView(APIView):
 
     def get(self, request):
         user = request.user
-        answers = Answer.objects.filter(user=user)
+        times = user.resets.split(';') if user.resets is not None else []
+
+        answers = Answer.objects.filter(user=user, turn=times[-1])
 
         corrects = Question.objects.filter(week__is_active=True, question_id__in=answers.filter(choice__is_correct=True, question__isnull=False)
                                            .values_list('question_id', flat=True))
@@ -206,10 +208,7 @@ class AnswerView(APIView):
         startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
         startday = startday - timedelta(days=startday.weekday())
 
-        times = user.resets.split(';') if user.resets is not None else []
-        times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
-
-        predict_answer = Answer.objects.filter(user=user, question__week__is_active=True, question__type=Enum.QUESTION_PREDICT).first()
+        predict_answer = Answer.objects.filter(user=user, turn=times[-1], question__week__is_active=True, question__type=Enum.QUESTION_PREDICT).first()
         result = {
             "corrects": corrects.count(),
             "total": total.count(),
