@@ -142,8 +142,6 @@ class RankAdmin(admin.ModelAdmin):
             return HttpResponseRedirect('../')
 
         week_id = week.week_id if week is not None else None
-        question_count = Question.objects.filter(week_id=week_id, type=Enum.QUESTION_CHOICE).count()
-
         completed = Answer.objects.values('user_id').annotate(question_count=Count('question_id'))\
             .filter(question_count=19, question__type=Enum.QUESTION_CHOICE, question__week_id=week_id).values_list('user_id', flat=True)
 
@@ -239,9 +237,7 @@ class RankAdmin(admin.ModelAdmin):
         if week is None:
             week = Week.objects.filter(is_active=True).first()
     
-        question_count = Question.objects.filter(week_id=week_id, type=Enum.QUESTION_CHOICE).count()
-        completed_count = Answer.objects.values('user_id').annotate(question_count=Count('question_id'))\
-            .filter(question_count=question_count, question__type=Enum.QUESTION_CHOICE, question__week_id=week_id).values_list('user_id', flat=True).count()
+        completed_count = Rank.objects.filter(corrects=19, week_id=week_id).count()
 
         title = week.name if week is not None else None
         updated_at = week.rank_updated_at if week is not None else None
