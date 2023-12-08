@@ -586,13 +586,14 @@ class ChartDataView(APIView):
                 anwser_count += anwsers.count()
                 anwser_graph.append(anwser_count)
 
-                anwser_correct += anwsers.filter(choice__is_correct=True).count()
+                corrects = anwsers.filter(choice__is_correct=True).count()
+                anwser_correct += corrects
                 if current.date() != start_day.date():
                     Chart.objects.create(
                         date=start_day,
                         user_count=user_count,
                         anwser_count=anwser_count,
-                        anwser_correct=anwser_correct,
+                        anwser_correct=corrects,
                     )
             else:
                 user_graph.append(chart.user_count)
