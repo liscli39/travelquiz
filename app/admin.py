@@ -95,8 +95,8 @@ class AnswerAdmin(admin.ModelAdmin):
 
     raw_id_fields=['user']
     search_fields = ('user__user_id', 'user__phone')
-    list_display = ('user', 'question', 'is_correct' ,'time', 'choice', 'content')
-    ordering = ('-answer_id',)
+    list_display = ('user', 'question', 'is_correct' ,'time', 'choice', 'content', 'turn')
+    ordering = ('-turn', '-answer_id',)
 
 class WeekFilter(admin.SimpleListFilter):
     title = _('week')

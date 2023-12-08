@@ -103,6 +103,8 @@ class QuestionView(APIView):
 
     def post(self, request):
         user = request.user
+
+        current = datetime.now()
         turn = str(int(current.timestamp()))
         data = [{
             'user': user.user_id,
@@ -121,7 +123,6 @@ class QuestionView(APIView):
         # if time_sum < 1500:
         #     return Response({'error': 'INVALID_INPUT_DATA'}, status=status.HTTP_400_BAD_REQUEST)
 
-        current = datetime.now()
         startday = current.replace(hour=0, minute=0, second=0, microsecond=0)
         startday = startday - timedelta(days=startday.weekday())
 
