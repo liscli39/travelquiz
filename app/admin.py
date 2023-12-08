@@ -84,6 +84,7 @@ class AnswerAdmin(admin.ModelAdmin):
     search_fields = ('user__user_id', 'user__phone')
     list_display = ('user', 'question', 'is_correct' ,'time', 'choice', 'content', 'turn', 'week')
     list_per_page = 40
+    raw_id_fields=['user']
 
     def get_search_results(self, request, queryset, search_term):
         queryset, use_distinct = super(AnswerAdmin, self).get_search_results(request, queryset, search_term)
