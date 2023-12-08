@@ -81,11 +81,19 @@ class AnswerAdmin(admin.ModelAdmin):
     def week(self, obj):
         return obj.question.week if obj.question is not None else ''
 
-    raw_id_fields=['user']
     search_fields = ('user__user_id', 'user__phone')
     list_display = ('user', 'question', 'is_correct' ,'time', 'choice', 'content', 'turn', 'week')
-    ordering = ('-turn', '-answer_id',)
     list_per_page = 40
+
+    def get_search_results(self, request, queryset, search_term):
+        queryset, use_distinct = super(AnswerAdmin, self).get_search_results(request, queryset, search_term)
+        try:
+            if search_term is not None and search_term != '':
+                queryset =  queryset.order_by('-turn', '-answer_id')
+        except:
+            pass
+
+        return queryset, use_distinct
 
 
 class WeekFilter(admin.SimpleListFilter):
