@@ -8,3 +8,4 @@ from .group_answer import GroupAnswer
 from .week import Week
 from .island import Island
 from .rank import Rank
+from .chart import Chart

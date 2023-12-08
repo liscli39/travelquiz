@@ -8,7 +8,7 @@ from django.urls import path, reverse
 from django.db.models import Count
 from django.utils.html import format_html
 
-from .models import Question, Choice, User, Answer, Week, Island, Rank
+from .models import Question, Choice, User, Answer, Week, Island, Rank, Chart
 from django.contrib.admin.filters import AllValuesFieldListFilter
 from app.utils.enum import Enum
 
@@ -93,10 +93,15 @@ class AnswerAdmin(admin.ModelAdmin):
     def is_correct(self, obj):
         return obj.choice.is_correct if obj.choice else False
 
+    def week(self, obj):
+        return obj.question.week if obj.question is not None else ''
+
     raw_id_fields=['user']
     search_fields = ('user__user_id', 'user__phone')
-    list_display = ('user', 'question', 'is_correct' ,'time', 'choice', 'content', 'turn')
+    list_display = ('user', 'question', 'is_correct' ,'time', 'choice', 'content', 'turn', 'week')
     ordering = ('-turn', '-answer_id',)
+    list_per_page = 40
+
 
 class WeekFilter(admin.SimpleListFilter):
     title = _('week')
@@ -142,22 +147,17 @@ class RankAdmin(admin.ModelAdmin):
             return HttpResponseRedirect('../')
 
         week_id = week.week_id if week is not None else None
-        completed = Answer.objects.values('user_id').annotate(question_count=Count('question_id'))\
-            .filter(question_count=19, question__type=Enum.QUESTION_CHOICE, question__week_id=week_id).values_list('user_id', flat=True)
+        completed = Answer.objects.values('user_id', 'turn').annotate(question_count=Count('question_id'))\
+            .filter(question_count=1, question__type=Enum.QUESTION_CHOICE, question__week_id=week_id).values_list('user_id', flat=True)
 
         completed_count = completed.count()
 
         corrects = '''
-            SELECT COUNT(V0.`question_id`) AS `count`
-            FROM `app_question` V0
-            WHERE
-                V0.`week_id` = {} AND
-                V0.`question_id` IN(
-                    SELECT U0.`question_id`
-                    FROM `app_answer` U0
-                    INNER JOIN `app_choice` U1 ON (U0.`choice_id` = U1.`choice_id`)
-                    WHERE  U1.`is_correct` AND U0.`question_id` IS NOT NULL AND U0.`user_id` = `app_user`.`user_id`
-                ) LIMIT 1
+            SELECT COUNT(U0.`question_id`) AS `count`
+            FROM `app_answer` U0 INNER JOIN `app_choice` U1 ON (U0.`choice_id` = U1.`choice_id`)
+            WHERE  U1.`is_correct` AND U0.`question_id` IS NOT NULL AND U0.`user_id` = `app_user`.`user_id`
+            GROUP BY turn ORDER BY COUNT(U0.`question_id`) DESC
+            LIMIT 1
         '''.format(week_id)
 
         users = User.objects.raw('''
@@ -280,11 +280,15 @@ class RankAdmin(admin.ModelAdmin):
     list_filter = ('selected', WeekFilter)
 
 
+class ChartAdmin(admin.ModelAdmin):
+    list_display = ('date', 'user_count', 'anwser_count', 'anwser_correct')
+
 admin.site.register(Question, QuestionAdmin)
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(Answer, AnswerAdmin)
 admin.site.register(Week, WeekAdmin)
 admin.site.register(Rank, RankAdmin)
+admin.site.register(Chart, ChartAdmin)
 # admin.site.register(Group)
 # admin.site.register(GroupUser)
 # admin.site.register(GroupAnswer)

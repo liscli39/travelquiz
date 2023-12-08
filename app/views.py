@@ -7,7 +7,7 @@ from rest_framework_jwt.views import ObtainJSONWebToken
 from django.db.models import OuterRef, Count, Exists, Sum, Q
 from django.shortcuts import render
 
-from app.models import User, Question, Answer, Group, GroupUser, GroupAnswer, Week, Rank
+from app.models import User, Question, Answer, Group, GroupUser, GroupAnswer, Week, Rank, Chart
 from app.serializer import LoginSerializer, RegisterSerializer, QuestionDetailSerializer, QuestionSerializer, \
     AnswerQuestionSerializer, RankSerializer, GroupSerializer, GroupUserSerializer, GroupAnswerSerializer, UserSerializer, \
     WeekSerializer, PhoneSerializer
@@ -574,15 +574,30 @@ class ChartDataView(APIView):
         user_count = 0
         anwser_count = 0
         anwser_correct = 0
-        for day in range(0, 30):
-            user_count += User.objects.filter(date_joined__gte=start_day, date_joined__lt=(start_day + timedelta(days=1))).count()
-            user_graph.append(user_count)
-            
-            anwsers = Answer.objects.filter(answer_at__gte=start_day, answer_at__lt=(start_day + timedelta(days=1)), question__isnull=False)
-            anwser_count += anwsers.count()
-            anwser_graph.append(anwser_count)
 
-            anwser_correct += anwsers.filter(choice__is_correct=True).count()
+        for day in range(0, 30):
+            chart = Chart.objects.filter(date=start_day).first()
+
+            if chart is None:
+                user_count += User.objects.filter(date_joined__gte=start_day, date_joined__lt=(start_day + timedelta(days=1))).count()
+                user_graph.append(user_count)
+                
+                anwsers = Answer.objects.filter(answer_at__gte=start_day, answer_at__lt=(start_day + timedelta(days=1)), question__isnull=False)
+                anwser_count += anwsers.count()
+                anwser_graph.append(anwser_count)
+
+                anwser_correct += anwsers.filter(choice__is_correct=True).count()
+                if current.date() != start_day.date():
+                    Chart.objects.create(
+                        date=start_day,
+                        user_count=user_count,
+                        anwser_count=anwser_count,
+                        anwser_correct=anwser_correct,
+                    )
+            else:
+                user_graph.append(chart.user_count)
+                anwser_graph.append(chart.anwser_count)
+                anwser_correct += chart.anwser_correct
 
             start_day = start_day + timedelta(days = 1)
 
