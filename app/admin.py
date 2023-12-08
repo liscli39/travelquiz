@@ -32,17 +32,6 @@ class QuestionAdmin(admin.ModelAdmin):
     inlines = [ChoiceInline]
 
 class CustomUserAdmin(UserAdmin):
-    # def answers(self, obj):
-    #     answers = Answer.objects.filter(user=obj)
-    #     corrects = Question.objects.filter(week__is_active=True, question_id__in=answers.filter(choice__is_correct=True, question__isnull=False)
-    #                                        .values_list('question_id', flat=True))
-    #     total = Question.objects.filter(week__is_active=True, question_id__in=answers.values_list('question_id', flat=True))
-    #     return f'{corrects.count()}/{total.count()}'
-
-    # answers.short_description = 'Corrects/Total'
-    # def get_address(self, obj):
-    #     return (obj.address[:75] + '...') if obj.address and len(obj.address) > 75 else obj.address
-
     def get_office(self, obj):
         return (obj.office[:75] + '...') if obj.office and len(obj.office) > 75 else obj.office
 
@@ -89,10 +78,6 @@ class WeekAdmin(admin.ModelAdmin):
 
 
 class AnswerAdmin(admin.ModelAdmin):
-    @admin.display(boolean=True)
-    def is_correct(self, obj):
-        return obj.choice.is_correct if obj.choice else False
-
     def week(self, obj):
         return obj.question.week if obj.question is not None else ''
 

@@ -136,7 +136,10 @@ class QuestionView(APIView):
         user.resets = ';'.join(times)
         user.save()
 
-        serializer.save()
+        answers = serializer.save()
+        for answer in answers:
+            answer.is_correct = answer.choice.is_correct if answer.choice else None
+            answer.save()
 
         return Response(data, status=status.HTTP_200_OK)
 
@@ -195,7 +198,7 @@ class AnswerView(APIView):
 
         answers = Answer.objects.filter(user=user, turn=times[-1])
 
-        corrects = Question.objects.filter(week__is_active=True, question_id__in=answers.filter(choice__is_correct=True, question__isnull=False)
+        corrects = Question.objects.filter(week__is_active=True, question_id__in=answers.filter(is_correct=True, question__isnull=False)
                                            .values_list('question_id', flat=True))
 
         total = Question.objects.filter(week__is_active=True, question_id__in=answers.values_list('question_id', flat=True))
@@ -473,7 +476,7 @@ class GroupAnswerView(APIView):
         user = request.user
         answers = GroupAnswer.objects.filter(group_id=group_id, user_id=user.user_id)
 
-        corrects = Question.objects.filter(question_id__in=answers.filter(choice__is_correct=True, question__isnull=False)
+        corrects = Question.objects.filter(question_id__in=answers.filter(is_correct=True, question__isnull=False)
                                            .values_list('question_id', flat=True))
 
         total = Question.objects.filter(question_id__in=answers.values_list('question_id', flat=True))
@@ -580,7 +583,7 @@ class ChartDataView(APIView):
                 anwsers = Answer.objects.filter(answer_at__gte=start_day, answer_at__lt=(start_day + timedelta(days=1)), question__isnull=False)
                 anwser_count += anwsers.count()
 
-                corrects = anwsers.filter(choice__is_correct=True).count()
+                corrects = anwsers.filter(is_correct=True).count()
                 anwser_correct += corrects
                 if current.date() != start_day.date():
                     Chart.objects.create(
