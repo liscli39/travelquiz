@@ -18,3 +18,4 @@ class Answer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, null=True, blank=True)
     turn = models.CharField(null=True, blank=True, max_length=255)
     answer_at = models.DateTimeField(auto_now_add=True, null=True)
+    is_correct = models.BooleanField(null=True)

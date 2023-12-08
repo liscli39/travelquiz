@@ -577,11 +577,8 @@ class ChartDataView(APIView):
 
             if chart is None:
                 user_count += User.objects.filter(date_joined__gte=start_day, date_joined__lt=(start_day + timedelta(days=1))).count()
-                user_graph.append(user_count)
-                
                 anwsers = Answer.objects.filter(answer_at__gte=start_day, answer_at__lt=(start_day + timedelta(days=1)), question__isnull=False)
                 anwser_count += anwsers.count()
-                anwser_graph.append(anwser_count)
 
                 corrects = anwsers.filter(choice__is_correct=True).count()
                 anwser_correct += corrects
@@ -593,10 +590,12 @@ class ChartDataView(APIView):
                         anwser_correct=corrects,
                     )
             else:
-                user_graph.append(chart.user_count)
-                anwser_graph.append(chart.anwser_count)
+                user_count = chart.user_count
+                anwser_count = chart.anwser_count
                 anwser_correct += chart.anwser_correct
 
+            user_graph.append(user_count)
+            anwser_graph.append(anwser_count)
             start_day = start_day + timedelta(days = 1)
 
         anwser_type_graph = [anwser_correct, anwser_count - anwser_correct]
