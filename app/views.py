@@ -194,7 +194,7 @@ class AnswerView(APIView):
 
     def get(self, request):
         user = request.user
-        times = user.resets.split(';') if user.resets is not None else []
+        times = user.resets.split(';') if user.resets is not None else [0]
 
         answers = Answer.objects.filter(user=user, turn=times[-1])
 
