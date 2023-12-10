@@ -248,7 +248,7 @@ class RankAdmin(admin.ModelAdmin):
     # list_editable = ('selected',)
     list_display_links = None
 
-    ordering = ('-selected', '-corrects', 'predict', 'time')
+    ordering = ('-selected', '-corrects', 'delta', 'time')
     sortable_by = ()
     list_filter = ('selected', WeekFilter)
 
