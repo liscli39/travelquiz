@@ -85,6 +85,17 @@ class Command(BaseCommand):
             rank_count = ranks.count()
             ranks.update(delta = Abs(rank_count - F('predict')))
 
+            for rank in ranks:
+                exist = Rank.objects.filter(
+                        week_id=rank.week_id,
+                        user_id=rank.user_id,
+                        corrects=rank.corrects,
+                        time=rank.time,
+                        predict=rank.predict
+                    ).exclude(rank_id=rank.rank_id).exists()
+                if exist:
+                    rank.delete()
+
             week.rank_status = Enum.RANK_UPDATE_FINISH
             week.rank_process = 0
             week.rank_updated_at = datetime.now()
