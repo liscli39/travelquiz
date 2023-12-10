@@ -10,6 +10,7 @@ class Week(models.Model):
     is_active = models.BooleanField(null=True, blank=True, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     rank_status = models.SmallIntegerField(choices=Enum.RankUpdateStatus, default=Enum.RANK_UPDATE_FINISH)
+    rank_process =  models.IntegerField(default=0)
     rank_updated_at = models.DateTimeField(null=True)
     show_rank = models.BooleanField(null=True, blank=True, unique=True)
     limit_time = models.IntegerField(default=120000)

@@ -208,15 +208,17 @@ class RankAdmin(admin.ModelAdmin):
         week = Week.objects.filter(pk=week_id).first()
         if week is None:
             week = Week.objects.filter(is_active=True).first()
+            week_id = week.week_id
     
         completed_count = Rank.objects.filter(corrects=19, week_id=week_id).count()
 
         rank_status = week.rank_status if week is not None else None
+        rank_process = week.rank_process if week is not None else 0
         title = week.name if week is not None else None
         updated_at = week.rank_updated_at if week is not None else None
         action = 'reload/' + ('?week={}'.format(week.week_id) if week is not None else '')
 
-        extra_context = {'rank_status': rank_status, 'title': title, 'updated_at': updated_at, 'action': action, 'completed_count': completed_count}
+        extra_context = {'rank_status': rank_status, 'rank_process': rank_process, 'title': title, 'updated_at': updated_at, 'action': action, 'completed_count': completed_count}
         self.completed_count = completed_count
         return super(RankAdmin, self).changelist_view(request, extra_context=extra_context)
 

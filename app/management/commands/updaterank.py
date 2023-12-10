@@ -77,6 +77,8 @@ class Command(BaseCommand):
                     for item in data
                 ])
 
+                week.rank_process = (OFFSET / users_count) * 100
+                week.save()
                 OFFSET += LIMIT
 
             ranks = Rank.objects.filter(week_id=week_id)
@@ -84,6 +86,7 @@ class Command(BaseCommand):
             ranks.update(delta = Abs(rank_count - F('predict')))
 
             week.rank_status = Enum.RANK_UPDATE_FINISH
+            week.rank_process = 100
             week.rank_updated_at = datetime.now()
             week.save()
 
