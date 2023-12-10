@@ -21,7 +21,7 @@ class ChoiceInline(admin.TabularInline):
 
 class QuestionAdmin(admin.ModelAdmin):
     def answer_count(self, obj):
-        return Answer.objects.filter(question=obj).count()
+        return Answer.objects.filter(question_id=obj.question_id).count()
 
     list_display = ('question_text', 'answer_count', 'week', 'type')
     list_editable = ('week', 'type')
@@ -30,6 +30,57 @@ class QuestionAdmin(admin.ModelAdmin):
         (None, {'fields': ['question_text', 'week', 'type', 'wiki_url', 'wiki_title']}),
     ]
     inlines = [ChoiceInline]
+
+
+class InputFilter(admin.SimpleListFilter):
+    template = 'admin/input_filter.html'
+
+    def lookups(self, request, model_admin):
+        # Dummy, required to show the filter.
+        return ((),)
+
+    def choices(self, changelist):
+        # Grab only the "all" option.
+        all_choice = next(super().choices(changelist))
+        all_choice['query_parts'] = (
+            (k, v)
+            for k, v in changelist.get_filters_params().items()
+            if k != self.parameter_name
+        )
+        yield all_choice
+
+class JobFilter(InputFilter):
+    parameter_name = 'job'
+    title = _('Job')
+
+    def queryset(self, request, queryset):
+        if self.value() is not None:
+            return queryset.filter(job__icontains=self.value())
+
+class OfficeFilter(InputFilter):
+    parameter_name = 'office'
+    title = _('Office')
+
+    def queryset(self, request, queryset):
+        if self.value() is not None:
+            return queryset.filter(office__icontains=self.value())
+
+class DistrictFilter(InputFilter):
+    parameter_name = 'district'
+    title = _('District')
+
+    def queryset(self, request, queryset):
+        if self.value() is not None:
+            return queryset.filter(district__icontains=self.value())
+
+class WardsFilter(InputFilter):
+    parameter_name = 'wards'
+    title = _('Wards')
+
+    def queryset(self, request, queryset):
+        if self.value() is not None:
+            return queryset.filter(wards__icontains=self.value())
+
 
 class CustomUserAdmin(UserAdmin):
     def get_office(self, obj):
@@ -42,11 +93,11 @@ class CustomUserAdmin(UserAdmin):
     list_filter = (
         ('allow_access'),
         ('gender'),
-        ('job', DropdownFilter),
-        ('office', DropdownFilter),
         ('prefecture', DropdownFilter),
-        ('district', DropdownFilter),
-        ('wards', DropdownFilter),
+        JobFilter,
+        OfficeFilter,
+        DistrictFilter,
+        WardsFilter
     )
     fieldsets = (
         ('None', {'fields': ('phone', 'password', 'name', 'year', 'cccd', 'gender', 'job', 'office', 'prefecture', 'district', 'wards', 'resets')}),
@@ -61,7 +112,7 @@ class CustomUserAdmin(UserAdmin):
     )
     form = UserChangeForm
     search_fields = ('user_id', 'phone', 'name', 'gender', 'job', 'address', 'office', 'prefecture', 'district', 'wards')
-    ordering = ('phone', 'allow_access')
+    ordering = None
 
 
 class IslandInline(admin.TabularInline):
@@ -72,7 +123,7 @@ class WeekAdmin(admin.ModelAdmin):
     def question_count(self, obj):
         return obj.question_set.count()
 
-    list_display = ('name', 'is_active', 'question_count', 'show_rank')
+    list_display = ('name', 'is_active', 'question_count', 'show_rank', 'rank_status')
     list_editable = ('is_active', 'show_rank')
     inlines = [IslandInline]
 
@@ -84,7 +135,7 @@ class AnswerAdmin(admin.ModelAdmin):
     search_fields = ('user__user_id', 'user__phone')
     list_display = ('user', 'question', 'is_correct' ,'time', 'choice', 'content', 'turn', 'week')
     list_per_page = 40
-    raw_id_fields=['user']
+    raw_id_fields=['user', 'choice', 'question']
 
     def get_search_results(self, request, queryset, search_term):
         queryset, use_distinct = super(AnswerAdmin, self).get_search_results(request, queryset, search_term)
@@ -140,83 +191,10 @@ class RankAdmin(admin.ModelAdmin):
             self.message_user(request, 'There is no active week!', level=messages.ERROR)
             return HttpResponseRedirect('../')
 
-        week_id = week.week_id if week is not None else None
-        completed = Answer.objects.values('user_id', 'turn').annotate(question_count=Count('question_id'))\
-            .filter(question_count=1, question__type=Enum.QUESTION_CHOICE, question__week_id=week_id).values_list('user_id', flat=True)
-
-        completed_count = completed.count()
-
-        corrects = '''
-            SELECT COUNT(U0.`question_id`) AS `count`
-            FROM `app_answer` U0 INNER JOIN `app_choice` U1 ON (U0.`choice_id` = U1.`choice_id`)
-            WHERE  U1.`is_correct` AND U0.`question_id` IS NOT NULL AND U0.`user_id` = `app_user`.`user_id`
-            GROUP BY turn ORDER BY COUNT(U0.`question_id`) DESC
-            LIMIT 1
-        '''.format(week_id)
-
-        users = User.objects.raw('''
-            SELECT
-                `app_user`.`user_id`,
-                `app_user`.`phone`,
-                `app_user`.`name`,
-                ({corrects}) AS `corrects`,
-                (
-                    SELECT SUM(U0.`time`)
-                    FROM `app_answer` U0
-                    INNER JOIN `app_question` U2 ON (U0.`question_id` = U2.`question_id`)
-                    WHERE 
-                        U2.`week_id` = {week_id} AND
-                        U0.`question_id` IS NOT NULL AND 
-                        U0.`user_id` = `app_user`.`user_id`
-                    GROUP BY U0.`user_id`
-                    ORDER BY NULL
-                    LIMIT 1
-                ) AS `time`,
-                ABS(
-                    {completed_count} - (
-                        SELECT SUBSTRING(`content`, 1, 9)
-                        FROM `app_answer` U0
-                        INNER JOIN `app_question` U2 ON (U0.`question_id` = U2.`question_id`)
-                        WHERE 
-                            U2.`week_id` = {week_id} AND
-                            U2.`type` = 2 AND
-                            U0.`question_id` IS NOT NULL AND 
-                            U0.`user_id` = `app_user`.`user_id`
-                        ORDER BY NULL
-                        LIMIT 1
-                    )
-                ) AS `delta`,
-                (
-                    SELECT SUBSTRING(`content`, 1, 9)
-                    FROM `app_answer` U0
-                    INNER JOIN `app_question` U2 ON (U0.`question_id` = U2.`question_id`)
-                    WHERE 
-                        U2.`week_id` = {week_id} AND
-                        U2.`type` = 2 AND
-                        U0.`question_id` IS NOT NULL AND 
-                        U0.`user_id` = `app_user`.`user_id`
-                    ORDER BY NULL
-                    LIMIT 1
-                ) AS `predict`
-            FROM `app_user`
-            WHERE 
-                NOT `app_user`.`is_superuser` 
-                AND `app_user`.`user_id` IN ({completed}) 
-                AND ({corrects}) > 0
-            ORDER BY `corrects` DESC, `delta` ASC, `time` ASC
-            LIMIT 500;
-        '''.format(completed=completed.query, corrects=corrects, week_id=week_id, completed_count=completed_count))
-
-        Rank.objects.filter(week_id=week_id).delete()
-        Rank.objects.bulk_create([
-            Rank(week=week, user_id=user.user_id, corrects=user.corrects, time=user.time, predict=user.predict if user.predict else 0, delta=user.delta if user.delta else 0)
-            for user in users
-        ])
-
-        week.rank_updated_at = datetime.now()
+        week.rank_status = Enum.RANK_UPDATE_WAITING
         week.save()
 
-        self.message_user(request, 'All ranks are now updated')
+        self.message_user(request, 'Bảng xếp hạng đang được cập nhật vui lòng đợi ít phút!!')
         return HttpResponseRedirect('../?week={}'.format(week_id))
 
     def has_add_permission(self, request, obj=None):
@@ -233,11 +211,12 @@ class RankAdmin(admin.ModelAdmin):
     
         completed_count = Rank.objects.filter(corrects=19, week_id=week_id).count()
 
+        rank_status = week.rank_status if week is not None else None
         title = week.name if week is not None else None
         updated_at = week.rank_updated_at if week is not None else None
         action = 'reload/' + ('?week={}'.format(week.week_id) if week is not None else '')
 
-        extra_context = {'title': title, 'updated_at': updated_at, 'action': action, 'completed_count': completed_count}
+        extra_context = {'rank_status': rank_status, 'title': title, 'updated_at': updated_at, 'action': action, 'completed_count': completed_count}
         self.completed_count = completed_count
         return super(RankAdmin, self).changelist_view(request, extra_context=extra_context)
 

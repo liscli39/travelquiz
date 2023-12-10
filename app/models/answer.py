@@ -7,7 +7,7 @@ from app.models.question import Question
 class Answer(models.Model):
     class Meta:
         indexes = [
-            models.Index(fields=['answer_at']),
+            models.Index(fields=['answer_at', 'turn']),
         ]
 
     answer_id = models.BigAutoField(primary_key=True)

@@ -1,4 +1,5 @@
 from django.db import models
+from app.utils.enum import Enum
 
 class Week(models.Model):
     def __str__(self) -> str:
@@ -8,6 +9,7 @@ class Week(models.Model):
     name = models.CharField(max_length=255)
     is_active = models.BooleanField(null=True, blank=True, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    rank_status = models.SmallIntegerField(choices=Enum.RankUpdateStatus, default=Enum.RANK_UPDATE_FINISH)
     rank_updated_at = models.DateTimeField(null=True)
     show_rank = models.BooleanField(null=True, blank=True, unique=True)
     limit_time = models.IntegerField(default=120000)

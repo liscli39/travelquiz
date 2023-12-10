@@ -40,3 +40,12 @@ class Enum:
         (QUESTION_TEXT, 'tự luận'),
         (QUESTION_PREDICT, 'dự đoán'),
     )
+
+    RANK_UPDATE_FINISH = 0
+    RANK_UPDATE_WAITING = 1
+    RANK_UPDATE_PROCESS = 2
+    RankUpdateStatus = (
+        (RANK_UPDATE_FINISH, 'Đã xong'),
+        (RANK_UPDATE_WAITING, 'Đang đợi'),
+        (RANK_UPDATE_PROCESS, 'Đang chạy'),
+    )
