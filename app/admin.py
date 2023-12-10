@@ -7,10 +7,13 @@ from django.contrib.auth.admin import UserAdmin
 from django.urls import path, reverse
 from django.db.models import Count
 from django.utils.html import format_html
+from django.db.models import OuterRef, Subquery, F
+from django.db.models.functions import Abs
 
 from .models import Question, Choice, User, Answer, Week, Island, Rank, Chart
 from django.contrib.admin.filters import AllValuesFieldListFilter
 from app.utils.enum import Enum
+
 
 class DropdownFilter(AllValuesFieldListFilter):
     template = 'admin/dropdown_filter.html'
@@ -210,7 +213,9 @@ class RankAdmin(admin.ModelAdmin):
             week = Week.objects.filter(is_active=True).first()
             week_id = week.week_id
     
-        completed_count = Rank.objects.filter(corrects=19, week_id=week_id).count()
+        ranks = Rank.objects.filter(week_id=week_id)
+        completed_count = ranks.count()
+        ranks.update(delta = Abs(completed_count - F('predict')))
 
         rank_status = week.rank_status if week is not None else None
         rank_process = week.rank_process if week is not None else 0
