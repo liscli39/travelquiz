@@ -10,7 +10,7 @@ from django.db.models.functions import Abs
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        weeks = Week.objects.filter(is_active=True, rank_status=Enum.RANK_UPDATE_WAITING)
+        weeks = Week.objects.filter(rank_status=Enum.RANK_UPDATE_WAITING)
         week_ids = [week_id for week_id in weeks.values_list('week_id', flat=True)]
         weeks.update(rank_status=Enum.RANK_UPDATE_PROCESS)
 
@@ -86,7 +86,7 @@ class Command(BaseCommand):
             ranks.update(delta = Abs(rank_count - F('predict')))
 
             week.rank_status = Enum.RANK_UPDATE_FINISH
-            week.rank_process = 100
+            week.rank_process = 0
             week.rank_updated_at = datetime.now()
             week.save()
 
