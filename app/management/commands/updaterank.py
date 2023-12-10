@@ -82,8 +82,6 @@ class Command(BaseCommand):
                 OFFSET += LIMIT
 
             ranks = Rank.objects.filter(week_id=week_id)
-            rank_count = ranks.count()
-            ranks.update(delta = Abs(rank_count - F('predict')))
 
             for rank in ranks:
                 exist = Rank.objects.filter(
@@ -95,6 +93,9 @@ class Command(BaseCommand):
                     ).exclude(rank_id=rank.rank_id).exists()
                 if exist:
                     rank.delete()
+
+            rank_count = ranks.count()
+            ranks.update(delta = Abs(rank_count - F('predict')))
 
             week.rank_status = Enum.RANK_UPDATE_FINISH
             week.rank_process = 0
