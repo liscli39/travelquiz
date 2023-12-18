@@ -67,9 +67,9 @@ class Command(BaseCommand):
                     AND U0.`user_id` IN ({users})
                     AND U2.`week_id` = {week_id}
                     GROUP BY user_id, turn
-                    HAVING `predict` IS NOT NULL AND `total` = 19 AND `count` = 19
+                    HAVING `predict` IS NOT NULL AND `total` = {limit} AND `count` = {limit}
                 '''
-                data = User.objects.raw(query.format(users=','.join(map(str, users)), week_id=week_id))
+                data = User.objects.raw(query.format(users=','.join(map(str, users)), week_id=week_id, limit=week.limit_question))
 
                 print(OFFSET, data.__len__())
                 Rank.objects.bulk_create([
