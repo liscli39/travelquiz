@@ -211,8 +211,12 @@ class RankAdmin(admin.ModelAdmin):
         week = Week.objects.filter(pk=week_id).first()
         if week is None:
             week = Week.objects.filter(is_active=True).first()
-            week_id = week.week_id
     
+        if week is None:
+            week = Week.objects.first()
+
+        week_id = week.week_id
+
         ranks = Rank.objects.filter(week_id=week_id)
         completed_count = ranks.count()
         ranks.update(delta = Abs(completed_count - F('predict')))
