@@ -129,7 +129,7 @@ class QuestionView(APIView):
         times = user.resets.split(';') if user.resets is not None else []
         times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
 
-        if len(times) > 1:
+        if len(times) >= 1:
             return Response({'error': 'RESET_LIMIT'}, status=status.HTTP_400_BAD_REQUEST)
 
         times.append(turn)
@@ -229,7 +229,7 @@ class AnswerView(APIView):
         times = user.resets.split(';') if user.resets is not None else []
         times = [x for x in times if datetime.fromtimestamp(int(x)) > startday][:3]
 
-        if len(times) > 1:
+        if len(times) >= 1:
             return Response({'error': 'RESET_LIMIT'}, status=status.HTTP_400_BAD_REQUEST)
 
         Answer.objects.filter(Q(question__week__is_active=True) | Q(question=None), user=user).delete()
