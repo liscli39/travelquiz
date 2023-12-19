@@ -214,7 +214,7 @@ class AnswerView(APIView):
             "corrects": corrects.count(),
             "total": total.count(),
             "predict": predict_answer.content if predict_answer is not None else 0,
-            "reset_time": len(times) - 1,
+            "reset_time": len(times) if times[-1] != 0 else 0,
             "total_time": total_time,
         }
 
