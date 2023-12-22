@@ -134,9 +134,12 @@ class WeekAdmin(admin.ModelAdmin):
 class AnswerAdmin(admin.ModelAdmin):
     def week(self, obj):
         return obj.question.week if obj.question is not None else ''
+    
+    def content_tr(self, obj):
+        return (obj.content[:75] + '...') if obj.content and len(obj.content) > 75 else obj.content
 
     search_fields = ('user__user_id', 'user__phone')
-    list_display = ('user', 'question', 'is_correct' ,'time', 'choice', 'content', 'turn', 'week')
+    list_display = ('user', 'question', 'is_correct' ,'time', 'choice', 'content_tr', 'turn', 'week')
     list_per_page = 40
     raw_id_fields=['user', 'choice', 'question']
 

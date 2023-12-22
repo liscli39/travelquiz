@@ -19,7 +19,7 @@ class Command(BaseCommand):
             week_id = week.week_id
             Rank.objects.filter(week_id=week_id).delete()
 
-            question_ids = Question.objects.filter(week_id=week_id, type=Enum.QUESTION_PREDICT).values_list('question_id', flat=True)
+            question_ids = Question.objects.filter(week_id=week_id).exclude(type=Enum.QUESTION_CHOICE).values_list('question_id', flat=True)
             users_count = Answer.objects.filter(question_id__in=question_ids, turn__isnull=False, content__isnull=False).count()
             print('users_count', users_count)
 
@@ -35,7 +35,7 @@ class Command(BaseCommand):
                     U3.`user_id`,
                     U3.`name`,
                     U0.`turn`,
-                    COUNT(*) AS `count`,
+                    COUNT(DISTINCT `choice_id`) AS `count`,
                     (
                         SELECT `time` FROM `app_answer` AS A0 
                         WHERE 
@@ -67,13 +67,12 @@ class Command(BaseCommand):
                     AND U0.`user_id` IN ({users})
                     AND U2.`week_id` = {week_id}
                     GROUP BY user_id, turn
-                    HAVING `predict` IS NOT NULL AND `total` = {limit} AND `count` = {limit}
                 '''
                 data = User.objects.raw(query.format(users=','.join(map(str, users)), week_id=week_id, limit=week.limit_question))
 
                 print(OFFSET, data.__len__())
                 Rank.objects.bulk_create([
-                    Rank(week=week, user_id=item.user_id, corrects=item.count, time=item.time, predict=item.predict if item.predict else 0, delta=-1)
+                    Rank(week=week, user_id=item.user_id, corrects=item.count, time=item.time, predict=0, delta=-1)
                     for item in data
                 ])
 
